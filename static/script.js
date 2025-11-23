@@ -147,8 +147,12 @@ function triggerConfetti() {
 /* ---------- MESSAGES D’INFO ---------- */
 
 function addHistoryMessage(text) {
+    const messages = document.getElementById("messages");
+    messages.innerHTML = "";  // efface les anciens messages
+
     const msg = document.createElement("div");
     msg.className = "log";
     msg.textContent = text;
-    document.getElementById("messages").prepend(msg);
+
+    messages.appendChild(msg); // affiche uniquement le dernier
 }

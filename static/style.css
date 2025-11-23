@@ -1,99 +1,218 @@
+/* ---------- LAYOUT GLOBAL ---------- */
+
 body {
     background: #243447;
     color: white;
     font-family: Arial;
+    margin: 0;
+    padding: 20px;
 }
 
+.layout {
+    display: flex;
+    gap: 30px;
+    justify-content: center;
+    align-items: flex-start;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* ----------- PANNEAU LÉGENDE LATÉRAL ----------- */
+
+.legend {
+    background: #f7d84b;
+    padding: 20px 20px;
+    border-radius: 18px;
+    width: 250px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+    color: #4d3a00;
+    flex-shrink: 0;
+}
+
+.legend h2 {
+    margin: 0 0 8px 0;
+    text-align: center;
+}
+
+.legend-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0 6px;
+}
+
+.legend-table th {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.legend-table td {
+    background: rgba(255,255,255,0.35);
+    padding: 6px;
+    text-align: center;
+    border-radius: 6px;
+    font-size: 15px;
+}
+
+/* ---------- CONTAINER JEU ---------- */
+
 #container {
-    width: 600px;
-    margin: 30px auto;
+    flex-grow: 1;
+    max-width: 600px;
+}
+
+#container h1 {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 form {
     display: flex;
+    gap: 10px;
     margin-bottom: 20px;
 }
 
 input {
     flex: 1;
-    padding: 10px;
+    padding: 12px;
     font-size: 18px;
+    border-radius: 6px;
+    border: none;
 }
 
 button {
     background: #28a745;
-    padding: 10px 20px;
+    padding: 12px 22px;
     font-size: 18px;
     color: white;
     border: none;
+    border-radius: 6px;
     cursor: pointer;
 }
 
-.line {
-    display: flex;
-    align-items: center;
-    padding: 8px;
-    margin: 6px 0;
-    background: #324a5f;
-    border-radius: 5px;
+button:hover {
+    background: #2ecc71;
 }
 
+/* ----------- MESSAGES ----------- */
+#messages {
+    margin-top: 15px;
+    margin-bottom: 20px;
+    font-size: 16px;
+    min-height: 20px;
+}
+
+.log {
+    margin-bottom: 8px;
+    opacity: 0.85;
+}
+
+/* ----------- HISTORY ----------- */
+#history {
+    margin-top: 20px;
+}
+
+/* Ligne résultat */
+.line {
+    background: #2d3e50;
+    border-radius: 10px;
+    padding: 10px;
+    margin: 10px 0;
+    display: grid;
+    grid-template-columns: 40px 100px 40px 80px 1fr;
+    align-items: center;
+    gap: 12px;
+}
+
+/* Numéro */
+.num {
+    font-weight: bold;
+    opacity: 0.8;
+}
+
+/* Mot */
 .word {
-    width: 120px;
+    font-size: 18px;
     font-weight: bold;
 }
 
+/* Température */
 .temp {
-    width: 70px;
+    font-size: 17px;
+    text-align: right;
 }
 
+/* Barres */
 .bar {
-    flex-grow: 1;
+    background: #111;
     height: 12px;
-    background: #222;
     border-radius: 6px;
-    margin: 0 12px;
+    overflow: hidden;
 }
 
 .fill {
     height: 12px;
+    width: 0;
     border-radius: 6px;
+    transition: width 0.4s ease-out;
 }
+
+/* ----------- Responsive adjustments ----------- */
+@media (max-width: 600px) {
+    .line {
+        grid-template-columns: 25px 1fr 40px 60px 1fr;
+        gap: 8px;
+    }
+
+    .legend {
+        padding: 20px 20px;
+    }
+}
+
+/* ======== LAYOUT GLOBAL ======== */
+
+.layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 50px;
+    padding: 40px;
+}
+
+/* ======== COLONNE GAUCHE (TABLEAU) ======== */
 
 .legend {
-    background: #f7d944;
-    padding: 20px;
-    border-radius: 15px;
+    position: sticky;
+    top: 40px;
+    background: #f7d84b;
+    padding: 22px 30px;
+    border-radius: 18px;
     width: 260px;
-    margin: 20px auto;
+    height: fit-content;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+
+/* ======== COLONNE CENTRALE (JEU) ======== */
+
+.game-area {
+    width: 650px;
+    max-width: 90vw;
+}
+
+.game-area h1 {
     text-align: center;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    font-family: Arial, sans-serif;
+    margin-bottom: 20px;
 }
 
-.legend h2 {
-    margin-top: 0;
-    font-size: 22px;
-    font-weight: bold;
-}
+/* RESPONSIVE : mobile → tableau passe au-dessus */
+@media (max-width: 900px) {
+    .layout {
+        flex-direction: column;
+        align-items: center;
+    }
 
-.legend-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 10px;
+    .legend {
+        position: relative;
+        top: 0;
+        margin-bottom: 30px;
+    }
 }
-
-.legend-table th,
-.legend-table td {
-    padding: 5px;
-    font-size: 16px;
-}
-
-.legend-table tr:nth-child(even) {
-    background: rgba(255,255,255,0.3);
-}
-
-.legend-table tr td:nth-child(2) {
-    font-size: 20px;
-}
-

@@ -8,7 +8,7 @@ from core.game_engine import CemantixEngine
 
 app = FastAPI()
 
-loader = ModelLoader("models/frWac_no_postag_phrase_500_cbow_cut10_stripped.bin")
+loader = ModelLoader("model/frWac_no_postag_phrase_500_cbow_cut10_stripped.bin")
 model = loader.load()
 app.mount("/static", StaticFiles(directory="static"), name="static")
 

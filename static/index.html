@@ -31,6 +31,28 @@
 
         <h1>Cémantix</h1>
 
+        <div class="room-panel">
+            <div class="room-form">
+                <label>Votre pseudo
+                    <input id="player-name" type="text" placeholder="Choisissez un pseudo">
+                </label>
+                <label>Mode
+                    <select id="mode-select">
+                        <option value="coop">Coop</option>
+                        <option value="race">Course</option>
+                    </select>
+                </label>
+                <label>ID de room
+                    <input id="room-id-input" type="text" placeholder="Laisser vide pour créer">
+                </label>
+            </div>
+            <div class="room-actions">
+                <button id="create-room" type="button">Créer une room</button>
+                <button id="join-room" type="button">Rejoindre</button>
+            </div>
+            <div id="room-info" class="room-info"></div>
+        </div>
+
         <form id="form">
             <input id="word" type="text" placeholder="Tapez un mot..." autofocus>
             <button type="submit">Tester</button>
@@ -39,6 +61,11 @@
         <div id="messages" class="messages"></div>
 
         <div id="history"></div>
+    </div>
+
+    <div class="scoreboard-panel">
+        <h2>Scoreboard</h2>
+        <div id="scoreboard"></div>
     </div>
 
 </div>

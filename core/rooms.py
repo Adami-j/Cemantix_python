@@ -149,6 +149,7 @@ class RoomManager:
         target_word = get_simple_random_word(self.model)
         engine = CemantixEngine(self.model)
         engine.new_game(target_word)
+        print(f"[DEBUG] Mot à deviner pour la room {room_id}: {target_word}")
         room = RoomState(room_id=room_id, target_word=target_word, engine=engine, mode=mode)
         room.add_player(creator_name)
         self.rooms[room_id] = room

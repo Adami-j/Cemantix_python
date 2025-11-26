@@ -10,10 +10,10 @@ body {
 
 .layout {
     display: flex;
-    gap: 30px;
+    gap: 20px;
     justify-content: center;
     align-items: flex-start;
-    max-width: 1200px;
+    max-width: 1400px;
     margin: auto;
 }
 
@@ -27,6 +27,9 @@ body {
     box-shadow: 0 3px 10px rgba(0,0,0,0.25);
     color: #4d3a00;
     flex-shrink: 0;
+    position: sticky;
+    top: 40px;
+    height: fit-content;
 }
 
 .legend h2 {
@@ -57,7 +60,7 @@ body {
 
 #container {
     flex-grow: 1;
-    max-width: 600px;
+    max-width: 680px;
 }
 
 #container h1 {
@@ -69,6 +72,39 @@ form {
     display: flex;
     gap: 10px;
     margin-bottom: 20px;
+}
+
+.room-panel {
+    background: #2d3e50;
+    padding: 15px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+
+.room-form {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.room-form label {
+    display: flex;
+    flex-direction: column;
+    font-size: 14px;
+    gap: 6px;
+}
+
+.room-actions {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.room-info {
+    font-size: 14px;
+    opacity: 0.85;
 }
 
 input {
@@ -118,7 +154,7 @@ button:hover {
     padding: 10px;
     margin: 10px 0;
     display: grid;
-    grid-template-columns: 40px 100px 40px 80px 1fr;
+    grid-template-columns: 40px 120px 120px 60px 80px 1fr;
     align-items: center;
     gap: 12px;
 }
@@ -133,6 +169,11 @@ button:hover {
 .word {
     font-size: 18px;
     font-weight: bold;
+}
+
+.player {
+    font-size: 14px;
+    opacity: 0.8;
 }
 
 /* Température */
@@ -156,11 +197,41 @@ button:hover {
     transition: width 0.4s ease-out;
 }
 
+.scoreboard-panel {
+    background: #1c2733;
+    padding: 20px;
+    border-radius: 14px;
+    width: 260px;
+    color: #fff;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+
+.scoreboard-table {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.scoreboard-row {
+    display: grid;
+    grid-template-columns: 1fr 70px 130px;
+    gap: 10px;
+    padding: 8px 10px;
+    background: #2d3e50;
+    border-radius: 8px;
+    align-items: center;
+}
+
+.scoreboard-row.header {
+    background: transparent;
+    font-weight: bold;
+}
+
 /* ----------- Responsive adjustments ----------- */
 @media (max-width: 600px) {
     .line {
-        grid-template-columns: 25px 1fr 40px 60px 1fr;
-        gap: 8px;
+        grid-template-columns: 25px 1fr 1fr 40px 60px;
+        gap: 6px;
     }
 
     .legend {
@@ -169,39 +240,6 @@ button:hover {
 }
 
 /* ======== LAYOUT GLOBAL ======== */
-
-.layout {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 50px;
-    padding: 40px;
-}
-
-/* ======== COLONNE GAUCHE (TABLEAU) ======== */
-
-.legend {
-    position: sticky;
-    top: 40px;
-    background: #f7d84b;
-    padding: 22px 30px;
-    border-radius: 18px;
-    width: 260px;
-    height: fit-content;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
-}
-
-/* ======== COLONNE CENTRALE (JEU) ======== */
-
-.game-area {
-    width: 650px;
-    max-width: 90vw;
-}
-
-.game-area h1 {
-    text-align: center;
-    margin-bottom: 20px;
-}
 
 /* RESPONSIVE : mobile → tableau passe au-dessus */
 @media (max-width: 900px) {
@@ -214,5 +252,13 @@ button:hover {
         position: relative;
         top: 0;
         margin-bottom: 30px;
+    }
+
+    .room-form {
+        grid-template-columns: 1fr;
+    }
+
+    .scoreboard-panel {
+        width: 100%;
     }
 }

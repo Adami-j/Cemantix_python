@@ -70,6 +70,7 @@ class RoomState:
 
     end_time: float = 0.0
     team_score: int = 0
+    duration: int = 0
 
     reset_votes: Set[str] = field(default_factory=set)
 

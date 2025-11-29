@@ -176,8 +176,9 @@ def create_room(payload: CreateRoomRequest):
 
     mode = payload.mode if payload.mode in {"coop", "race", "blitz"} else "coop"
     room = room_manager.create_room(payload.game_type, mode, payload.player_name)
-
+    
     if payload.mode == "blitz" and payload.duration > 0:
+        room.duration = payload.duration
         room.end_time = time.time() + payload.duration
     
     return {
@@ -240,6 +241,12 @@ async def reset_room(room_id: str, payload: ResetRequest):
     if all_ready:
         # Tout le monde est prêt : on relance !
         room.reset_game()
+
+        # --- AJOUT BLITZ : On relance le chrono ---
+        if room.mode == "blitz" and room.duration > 0:
+            room.end_time = time.time() + room.duration
+            room.team_score = 0 # On remet le score d'équipe à 0
+        # ------------------------------------------
         
         # On récupère le nouvel état public
         public_state = room.engine.get_public_state()
@@ -249,6 +256,7 @@ async def reset_room(room_id: str, payload: ResetRequest):
             "public_state": public_state,
             "mode": room.mode,
             "scoreboard": build_scoreboard(room)
+            "end_time": room.end_time
         })
         return {"status": "reset_done"}
     else:

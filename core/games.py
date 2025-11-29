@@ -3,10 +3,14 @@ import re
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 import unicodedata
+import requests
+from urllib.parse import quote
 
 def remove_accents(input_str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
     return "".join([c for c in nfkd_form if not unicodedata.mirrored(c) and c.isalpha()]).upper()
+
+
 
 # --- Base Game Class ---
 class GameEngine(ABC):

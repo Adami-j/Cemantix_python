@@ -137,17 +137,18 @@
 <script type="module" src="/static/js/main.js"></script>
 
 <script>
-    console.log("🛠️ Chargement du script d'aide...");
-
+    console.log("⚡ Chargement du script Help...");
+    
     document.addEventListener('DOMContentLoaded', () => {
         const helpBtn = document.getElementById('help-trigger');
         const helpModal = document.getElementById('help-modal');
 
         if (helpBtn && helpModal) {
-            console.log("✅ Bouton aide connecté !");
-
+            console.log("✅ Bouton Aide connecté");
+            
             helpBtn.addEventListener('click', (e) => {
-                e.preventDefault();
+                e.preventDefault(); 
+                e.stopPropagation();
                 helpModal.classList.add('active');
             });
 
@@ -157,7 +158,7 @@
                 }
             });
         } else {
-            console.error("❌ ERREUR : Le bouton d'aide n'a pas été trouvé dans le HTML.");
+            console.error("❌ Problème : Bouton #help-trigger introuvable");
         }
     });
 </script>

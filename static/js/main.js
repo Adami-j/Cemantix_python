@@ -5,17 +5,73 @@ import { addEntry, renderHistory, renderScoreboard, triggerConfetti } from "./re
 
 // --- GESTION DE SESSION ---
 const STORAGE_KEY = "arcade_user_pseudo";
+const DAILY_WIN_KEY = "arcade_daily_win";
 let currentUser = localStorage.getItem(STORAGE_KEY) || "";
+
+function checkDailyVictory() {
+    const dailyBtn = document.getElementById("btn-daily");
+    if (!dailyBtn) return;
+
+    const lastWin = localStorage.getItem(DAILY_WIN_KEY);
+    // On obtient la date du jour au format YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+
+    if (lastWin === today) {
+        dailyBtn.textContent = "Défi du jour accompli ✅";
+        dailyBtn.classList.add("btn-disabled"); // Grise le bouton (voir CSS)
+        dailyBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            return false;
+        };
+    }
+}
 
 document.addEventListener("DOMContentLoaded", () => {
     updateSessionUI();
+    checkDailyVictory(); // Vérifie si le défi est déjà fait
     
-    // Si on est sur le Hub, on pré-remplit l'input s'il existe
+    // Pré-remplissage du pseudo sur le Hub
     const nameInput = document.getElementById('player-name');
     if (nameInput && currentUser) {
         nameInput.value = currentUser;
     }
+
+    // Initialisation du Chat (Si présent)
+    initChat();
 });
+
+function initChat() {
+    const chatForm = document.getElementById("chat-form");
+    
+    // Toggle Button
+    window.toggleChat = function() {
+        const chat = document.getElementById("chat-container");
+        const icon = document.getElementById("chat-toggle-icon");
+        if(chat) {
+            chat.classList.toggle("collapsed");
+            if(icon) icon.textContent = chat.classList.contains("collapsed") ? "▲" : "▼";
+        }
+    };
+
+    // Submit Listener (CORRECTION DU RELOAD)
+    if (chatForm) {
+        chatForm.addEventListener("submit", function(e) {
+            e.preventDefault(); // EMPÊCHE LE RECHARGEMENT
+            
+            const input = document.getElementById("chat-input");
+            const text = input.value.trim();
+            
+            if (text && state.websocket && state.websocket.readyState === WebSocket.OPEN) {
+                state.websocket.send(JSON.stringify({
+                    type: "chat",
+                    content: text
+                }));
+                input.value = "";
+            }
+        });
+    }
+}
 
 function updateSessionUI() {
     const display = document.getElementById("profile-name-display");
@@ -40,52 +96,42 @@ window.openLoginModal = function() {
 
     if (!overlay || !actionsEl) return;
 
-    // Contenu différent selon si on est en jeu ou sur le Hub
     let htmlContent = '';
     let buttonsHtml = '';
 
     if (isInGame) {
-        // --- MODE JEU : Modification bloquée ---
+        // Mode Jeu : Verrouillé
         htmlContent = `
             <div style="margin-bottom: 20px;">
                 <p>Vous êtes connecté en tant que :</p>
                 <input type="text" value="${currentUser}" disabled style="margin-top:15px; text-align:center; opacity:0.7;">
-                <p class="locked-message">🔒 Impossible de changer de pseudo pendant une partie.</p>
-            </div>
-        `;
-        // Bouton Fermer uniquement (ou Déconnexion qui quitte la partie)
+                <p class="locked-message">🔒 Pseudo verrouillé en partie.</p>
+            </div>`;
         buttonsHtml = `
-            <div style="display:flex; flex-direction:column; gap:10px; align-items:center; width:100%;">
+            <div style="display:flex; flex-direction:column; gap:10px; width:100%;">
                 <button class="btn" onclick="closeModal()">Fermer</button>
                 <button class="btn btn-danger" onclick="logout()">Se déconnecter & Quitter</button>
-            </div>
-        `;
+            </div>`;
     } else {
-        // --- MODE HUB : Modification autorisée ---
+        // Mode Hub : Modifiable
         htmlContent = `
             <div style="margin-bottom: 20px;">
-                <p>Choisissez votre pseudo pour cette session.</p>
-                <input type="text" id="login-pseudo" value="${currentUser}" placeholder="Votre Pseudo..." style="margin-top:15px; text-align:center;" autocomplete="off">
-            </div>
-        `;
-        
-        let logoutBtn = currentUser ? `<button class="btn btn-danger" onclick="logout()">Se déconnecter</button>` : '';
-        
+                <p>Votre pseudo pour la session :</p>
+                <input type="text" id="login-pseudo" value="${currentUser}" placeholder="Pseudo..." style="margin-top:15px; text-align:center;">
+            </div>`;
+        const logoutBtn = currentUser ? `<button class="btn btn-danger" onclick="logout()">Se déconnecter</button>` : '';
         buttonsHtml = `
-            <div style="display:flex; flex-direction:column; gap:15px; align-items:center; width:100%;">
+            <div style="display:flex; flex-direction:column; gap:15px; width:100%;">
                 <button class="btn" onclick="saveSessionPseudo()">Valider</button>
                 ${logoutBtn}
-            </div>
-        `;
+            </div>`;
     }
 
-    titleEl.textContent = "PROFIL JOUEUR";
+    titleEl.textContent = "PROFIL";
     contentEl.innerHTML = htmlContent;
     actionsEl.innerHTML = buttonsHtml;
-    
     overlay.classList.add('active');
 
-    // Focus automatique seulement si on est sur le Hub
     if (!isInGame) {
         setTimeout(() => {
             const input = document.getElementById('login-pseudo');
@@ -98,44 +144,28 @@ window.openLoginModal = function() {
 };
 
 window.logout = function() {
-    // 1. On efface le cache
     localStorage.removeItem(STORAGE_KEY);
     currentUser = "";
-    
-    // 2. On met à jour l'UI
     updateSessionUI();
-    
-    // 3. On vide l'input du Hub si présent
     const nameInput = document.getElementById('player-name');
     if (nameInput) nameInput.value = "";
-
-    // 4. Si on est en jeu, on redirige vers l'accueil
+    
     if (window.location.pathname === "/game") {
         window.location.href = "/";
     } else {
         closeModal();
-        // Feedback visuel
-        const btn = document.getElementById("btn-profile");
-        if(btn) {
-            btn.classList.add("error-shake");
-            setTimeout(() => btn.classList.remove("error-shake"), 500);
-        }
     }
 };
 
 window.saveSessionPseudo = function() {
     const input = document.getElementById('login-pseudo');
     const newName = input.value.trim();
-    
     if (newName) {
         currentUser = newName;
         localStorage.setItem(STORAGE_KEY, currentUser);
         updateSessionUI();
-        
-        // Mise à jour des inputs sur la page si présents
         const hubInput = document.getElementById('player-name');
         if (hubInput) hubInput.value = currentUser;
-        
         closeModal();
     } else {
         input.classList.add('error-shake');
@@ -149,16 +179,13 @@ const roomId = params.get("room");
 const playerName = params.get("player");
 
 if (window.location.pathname === "/game") {
-
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
     const playerName = params.get("player");
 
     if (!roomId || !playerName) {
-        console.error("Paramètres manquants, retour accueil.");
         window.location.href = "/";
     } else {
-        // On lance le jeu uniquement si les paramètres sont là
         initGameConnection(roomId, playerName);
     }
 }
@@ -169,20 +196,18 @@ function initGameConnection(roomId, playerName) {
     }
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    // Utilisation de encodeURIComponent pour gérer les caractères spéciaux dans le pseudo
     const wsUrl = `${protocol}://${window.location.host}/rooms/${roomId}/ws?player_name=${encodeURIComponent(playerName)}`;
     const ws = new WebSocket(wsUrl);
     
-    // On stocke le websocket dans l'état global pour pouvoir le fermer si besoin
-    state.websocket = ws;
+    state.websocket = ws; // Stockage global pour le chat
 
-    ws.onopen = () => { console.log("Connecté au WS"); };
+    ws.onopen = () => { console.log("WS Connecté"); };
     
     ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
 
         if (data.error) {
-            showModal("Erreur", data.message || "Une erreur est survenue");
+            showModal("Erreur", data.message || "Erreur inconnue");
             return;
         }
 
@@ -192,12 +217,15 @@ function initGameConnection(roomId, playerName) {
                 renderHistory(data.history || []);
                 renderScoreboard(data.scoreboard || []);
                 state.currentMode = data.mode;
-                if (data.mode === "blitz" && data.end_time) {
-                    startTimer(data.end_time);
-                }
                 state.roomLocked = data.locked;
-                state.scoreboard = data.scoreboard;
+                if (data.mode === "blitz" && data.end_time) startTimer(data.end_time);
+                
+                // Chargement historique chat
+                if (data.chat_history) {
+                    data.chat_history.forEach(msg => addChatMessage(msg.player_name, msg.content));
+                }
                 break;
+
             case "guess":
                 addEntry({
                     word: data.word,
@@ -207,168 +235,94 @@ function initGameConnection(roomId, playerName) {
                     feedback: data.feedback,
                     game_type: data.game_type
                 });
+                // Score équipe
                 if (data.team_score !== undefined) {
                     const scoreEl = document.getElementById('score-display');
                     if (scoreEl) scoreEl.textContent = data.team_score;
                 }
-                
-                // Gestion Pendu
-                if (data.game_type === "hangman") {
-                     const wordEl = document.getElementById("hangman-word");
-                     if(wordEl && data.masked_word) wordEl.textContent = data.masked_word;
-                     
-                     const letterPlayed = data.word.toUpperCase();
-                     const btn = document.getElementById(`key-${letterPlayed}`);
-                     if(btn) {
-                         btn.disabled = true;
-                         if (data.similarity > 0 || data.is_correct) btn.className = "key-btn correct";
-                         else btn.className = "key-btn wrong";
-                     }
-                     
-                     const bar = document.getElementById("hangman-battery");
-                     if(bar && data.lives !== undefined) {
-                         const maxLives = 7; 
-                         const pct = Math.max(0, (data.lives / maxLives) * 100);
-                         bar.style.width = `${pct}%`;
-                         if (pct < 30) bar.classList.add("battery-low");
-                         else bar.classList.remove("battery-low");
-                     }
-                }
-
-                if (data.defeat) {
-                    state.locked = true;
-                    state.roomLocked = true;
-                    const bar = document.getElementById("hangman-battery");
-                    if(bar) { bar.style.width = "0%"; bar.classList.add("battery-low"); }
-
-                    setTimeout(() => {
-                        showModal("GAME OVER", `
-                            <div style="text-align:center;">
-                                <p style="font-size:1.2rem; color:var(--text-muted);">Plus de batterie...</p>
-                                <p style="margin-top:20px;">Le mot était :</p>
-                                <h2 style="font-size:2.5rem; color:var(--accent); margin:10px 0;">${data.target_reveal.toUpperCase()}</h2>
-                            </div>
-                        `);
-                        
-                        const actionsDiv = document.getElementById('modal-actions');
-                        if (actionsDiv) {
-                            actionsDiv.innerHTML = `
-                                <div style="display: flex; gap: 10px; justify-content: center;">
-                                    <button id="btn-replay" class="btn">Recommencer</button>
-                                    <button id="btn-hub" class="btn btn-outline">Quitter</button>
-                                </div>
-                            `;
-                            document.getElementById('btn-replay').onclick = function() { sendResetRequest(this); };
-                            document.getElementById('btn-hub').onclick = function() { window.location.href = "/"; };
-                        }
-                    }, 500);
-                }
+                // Mise à jour interface Pendu
+                if (data.game_type === "hangman") updateHangmanUI(data);
+                // Défaite
+                if (data.defeat) handleDefeat(data);
                 break;
+
             case "scoreboard_update":
                 renderScoreboard(data.scoreboard || []);
-                state.currentMode = data.mode || state.currentMode;
                 state.roomLocked = data.locked;
-                state.scoreboard = data.scoreboard;
-                if (data.victory && data.winner) {
-                    handleVictory(data.winner, data.scoreboard);
-                }
+                if (data.victory && data.winner) handleVictory(data.winner, data.scoreboard);
                 break;
+
             case "victory":
                 handleVictory(data.winner, state.scoreboard || []);
                 break;
+
+            case "chat_message":
+                addChatMessage(data.player_name, data.content);
+                break;
+                
+            case "game_reset":
+                performGameReset(data);
+                break;
+                
             case "reset_update":
                 updateResetStatus(data);
                 break;
-            case "game_reset":
-                performGameReset(data);
-                if (data.mode === "blitz" && data.end_time) {
-                    startTimer(data.end_time);
-                    const s = document.getElementById('score-display');
-                    if(s) s.textContent = "0";
-                }
-                break;
         }
 
-        if (data.blitz_success) {
-            const s = document.getElementById('score-display');
-            if(s) s.textContent = data.team_score;
-            
-            initGameUI({ 
-                game_type: state.gameType, 
-                public_state: data.new_public_state 
-            });
-            
-            state.entries = [];
-            renderHistory();
-            addHistoryMessage(`✨ Mot trouvé ! Au suivant !`, 2000);
-        }
+        if (data.blitz_success) handleBlitzSuccess(data);
     };
 
-    ws.onclose = () => {
-        setRoomInfo("Déconnecté");
-    };
+    ws.onclose = () => { setRoomInfo("Déconnecté"); };
 }
 
 function initGameUI(data) {
-    // 1. Mise à jour de l'état global
     state.gameType = data.game_type;
-
-    // 2. Gestion du Titre
     const titles = { "cemantix": "Cémantix", "definition": "Dictionnario", "intruder": "L'Intrus", "hangman": "Pendu" };
     const titleEl = document.getElementById("game-title");
-    const hangmanArea = document.getElementById("hangman-area");
     if (titleEl) titleEl.textContent = titles[data.game_type] || "Jeu";
 
-    // 3. Récupération des éléments d'interface
+    // Gestion de l'affichage des panneaux
+    const elementsToHide = ["hangman-area", "game-instruction", "legend-panel", "intruder-area"];
+    elementsToHide.forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.style.display = "none";
+    });
+    
     const form = document.getElementById("guess-form");
-    const instrBox = document.getElementById("game-instruction");
-    const legendPanel = document.getElementById("legend-panel");
-    const intruderArea = document.getElementById("intruder-area");
+    if(form) form.style.display = "flex";
+
     const gameLayout = document.querySelector(".game-layout");
+    if(gameLayout) gameLayout.classList.remove("intruder-focus");
 
-    // 4. Réinitialisation de l'affichage (Tout masquer par précaution)
-    if (form) form.style.display = "flex";
-    if (hangmanArea) hangmanArea.style.display = "none";
-    if (instrBox) instrBox.style.display = "none";
-    if (legendPanel) legendPanel.style.display = "none";
-    if (intruderArea) intruderArea.style.display = "none";
-
+    // Affichage spécifique
     if (data.game_type === "hangman") {
-        if (form) form.style.display = "none"; // On cache l'input texte standard
-        if (gameLayout) gameLayout.classList.add("intruder-focus"); // On centre (réutilisation du style intruder)
-        
-        if (hangmanArea) {
-            hangmanArea.style.display = "block";
+        if(form) form.style.display = "none";
+        if(gameLayout) gameLayout.classList.add("intruder-focus");
+        const area = document.getElementById("hangman-area");
+        if(area) {
+            area.style.display = "block";
             renderHangmanUI(data.public_state);
         }
-    }
-
-    // 5. Logique spécifique par mode de jeu
-    if (data.game_type === "intruder") {
-        if (form) form.style.display = "none";
-        
-        // AJOUT : On active le mode centré
-        if (gameLayout) gameLayout.classList.add("intruder-focus");
-
-        if (intruderArea) {
-            intruderArea.style.display = "block";
-            if (typeof renderIntruderGrid === "function" && data.public_state) {
-                renderIntruderGrid(data.public_state.options);
-            }
+    } else if (data.game_type === "intruder") {
+        if(form) form.style.display = "none";
+        if(gameLayout) gameLayout.classList.add("intruder-focus");
+        const area = document.getElementById("intruder-area");
+        if(area) {
+            area.style.display = "block";
+            if(data.public_state) renderIntruderGrid(data.public_state.options);
         }
-
     } else if (data.game_type === "definition") {
-        // --- MODE DICTIONNARIO ---
-        if (instrBox) {
-            instrBox.style.display = "block";
+        const box = document.getElementById("game-instruction");
+        if(box) {
+            box.style.display = "block";
             document.getElementById("definition-text").textContent = `"${data.public_state.hint}"`;
             document.getElementById("hint-text").textContent = `Le mot fait ${data.public_state.word_length} lettres.`;
         }
-
     } else {
-        // --- MODE CÉMANTIX (Par défaut) ---
-        if (legendPanel) {
-            legendPanel.style.display = "block";
+        // Cemantix par défaut
+        const legend = document.getElementById("legend-panel");
+        if(legend) {
+            legend.style.display = "block";
             document.getElementById("legend-content").innerHTML = `
                 <div><span>💥 Top 1</span> <span>100°C</span></div>
                 <div><span>🔥 Brûlant</span> <span>99°C</span></div>
@@ -376,7 +330,6 @@ function initGameUI(data) {
                 <div><span>😎 Ça chauffe</span> <span>50°C</span></div>
                 <div><span>🌡️ Tiède</span> <span>20°C</span></div>
                 <div><span>💧 Frais</span> <span>0°C</span></div>
-                <div><span>❄️ Gelé</span> <span>< 0°C</span></div>
             `;
         }
     }
@@ -456,8 +409,12 @@ async function submitIntruderGuess(word, buttonElement) {
 function handleVictory(winnerName, scoreboardData) {
     if (state.locked) return;
     state.locked = true;
-
     triggerConfetti();
+
+    if (state.currentMode === "daily") {
+        const today = new Date().toLocaleDateString("fr-CA");
+        localStorage.setItem("arcade_daily_win", today);
+    }
 
     let scoreTableHtml = `
         <p style="font-size:1.2rem; margin-bottom:20px;">Le mot a été trouvé par <strong style="color:var(--accent)">${winnerName}</strong> !</p>
@@ -952,41 +909,49 @@ export function addChatMessage(player, content) {
     if (!container) return;
 
     const div = document.createElement("div");
-    const isMe = player === currentUser; // currentUser vient de votre gestion de session
+    // On compare avec le currentUser stocké
+    const isMe = player === currentUser; 
     
     div.className = `chat-msg ${isMe ? 'me' : 'others'}`;
     div.innerHTML = `<strong>${player}</strong> ${content}`;
     
     container.appendChild(div);
-    container.scrollTop = container.scrollHeight; // Scroll vers le bas
+    container.scrollTop = container.scrollHeight; // Scroll auto vers le bas
 }
 
 // Fonction pour ouvrir/fermer le chat
 window.toggleChat = function() {
     const chat = document.getElementById("chat-container");
-    chat.classList.toggle("collapsed");
     const icon = document.getElementById("chat-toggle-icon");
-    icon.textContent = chat.classList.contains("collapsed") ? "▲" : "▼";
+    
+    if (chat) {
+        chat.classList.toggle("collapsed");
+        // Change la flèche selon l'état
+        if (icon) {
+            icon.textContent = chat.classList.contains("collapsed") ? "▲" : "▼";
+        }
+    }
 };
 
 // Gestionnaire d'envoi du chat
 const chatForm = document.getElementById("chat-form");
 if (chatForm) {
-    chatForm.addEventListener("submit", (e) => {
-        e.preventDefault();
+    chatForm.addEventListener("submit", function(e) {
+        e.preventDefault(); // <--- C'EST ICI LA CLÉ : Empêche le rechargement de la page
+        
         const input = document.getElementById("chat-input");
         const text = input.value.trim();
         
-        if (text && state.websocket) {
+        // On vérifie que le websocket est ouvert et qu'il y a du texte
+        if (text && state.websocket && state.websocket.readyState === WebSocket.OPEN) {
             state.websocket.send(JSON.stringify({
                 type: "chat",
                 content: text
             }));
-            input.value = "";
+            input.value = ""; // Vide le champ
         }
     });
 }
-
 window.createGame = createGame;
 window.openGameConfig = openGameConfig;
 window.openDictioConfig = openDictioConfig;

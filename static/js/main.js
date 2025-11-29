@@ -114,15 +114,16 @@ function handleVictory(winnerName, scoreboardData) {
     triggerConfetti();
 
     let scoreTableHtml = `
-        <p style="font-size:1.2rem; margin-bottom:20px; color:white;">Le mot a été trouvé par <strong style="color:var(--accent)">${winnerName}</strong> !</p>
-        <div style="background:rgba(255,255,255,0.05); border-radius:8px; padding:15px; text-align:left; margin-bottom: 20px;">
+        <p style="font-size:1.2rem; margin-bottom:20px;">Le mot a été trouvé par <strong style="color:var(--accent)">${winnerName}</strong> !</p>
+        <div style="background:#f8f9fa; border-radius:12px; padding:15px; text-align:left; margin-bottom: 20px; border: 1px solid #eee;">
     `;
     
     if (scoreboardData && scoreboardData.length > 0) {
         scoreboardData.forEach((p, index) => {
             const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "";
+            // NOTE : J'ai retiré le border-bottom blanc transparent
             scoreTableHtml += `
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.05); font-family:var(--font-heading);">
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-family:var(--font-heading); color:var(--text-main);">
                     <span>${medal} ${p.player_name}</span>
                     <span>${p.attempts} essais</span>
                 </div>
@@ -175,7 +176,8 @@ async function sendResetRequest(btnElement) {
 function updateResetStatus(data) {
     const statusDiv = document.getElementById('reset-status-msg');
     if (statusDiv) {
-        statusDiv.innerHTML = `Joueurs prêts : <strong style="color:white">${data.current_votes}/${data.total_players}</strong><br>En attente de : ${data.waiting_for.join(', ')}`;
+        // color:white -> color:var(--text-main) ou on laisse hériter
+        statusDiv.innerHTML = `Joueurs prêts : <strong style="color:var(--accent)">${data.current_votes}/${data.total_players}</strong><br>En attente de : ${data.waiting_for.join(', ')}`;
     }
 }
 

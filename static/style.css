@@ -827,3 +827,54 @@ input::placeholder { color: #ccc; opacity: 1; }
     color: var(--text-muted);
     line-height: 1.4;
 }
+
+/* --- USER SESSION / PROFILE --- */
+.user-controls {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+}
+
+.profile-btn {
+    background: white;
+    border: 2px solid var(--border);
+    padding: 8px 20px;
+    border-radius: 50px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-heading);
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.2s;
+    box-shadow: var(--shadow-soft);
+}
+
+.profile-btn:hover {
+    border-color: var(--accent);
+    color: var(--text-main);
+    transform: translateY(-2px);
+}
+
+.profile-btn .avatar {
+    width: 30px;
+    height: 30px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.profile-btn.logged-in {
+    border-color: var(--success);
+    color: var(--text-main);
+}
+
+.profile-btn.logged-in .avatar {
+    background: var(--success);
+    color: white;
+}

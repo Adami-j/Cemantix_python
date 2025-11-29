@@ -7,6 +7,13 @@
 </head>
 <body>
 
+<div class="user-controls">
+    <button id="btn-profile" class="profile-btn" onclick="openLoginModal()">
+        <div class="avatar">👤</div>
+        <span id="profile-name-display">Connexion</span>
+    </button>
+</div>
+
 <div class="container">
     <header class="hero">
         <p class="eyebrow" style="color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; font-weight: 700; margin-bottom: 10px;">Plateforme de Jeux</p>
@@ -14,7 +21,6 @@
         <p>Une collection minimaliste de jeux de mots et de sémantique. Connectez-vous, choisissez votre défi et jouez en temps réel.</p>
         
         <div style="margin-top: 40px; display: grid; grid-template-columns: 1fr 1fr auto; gap: 20px; max-width: 700px;">
-            <input type="text" id="player-name" placeholder="Votre Pseudo *" />
             <input type="text" id="room-id" placeholder="Code Room (optionnel)" />
             <button id="btn-join" class="btn btn-outline">Rejoindre</button>
         </div>

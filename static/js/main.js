@@ -3,6 +3,94 @@ import { state } from "./state.js";
 import { addHistoryMessage, setRoomInfo, showModal, closeModal } from "./ui.js";
 import { addEntry, renderHistory, renderScoreboard, triggerConfetti } from "./rendering.js";
 
+// --- GESTION DE SESSION ---
+const STORAGE_KEY = "arcade_user_pseudo";
+let currentUser = localStorage.getItem(STORAGE_KEY) || "";
+
+document.addEventListener("DOMContentLoaded", () => {
+    updateSessionUI();
+    
+    // Si on est sur le Hub, on pré-remplit l'input s'il existe
+    const nameInput = document.getElementById('player-name');
+    if (nameInput && currentUser) {
+        nameInput.value = currentUser;
+    }
+});
+
+function updateSessionUI() {
+    const display = document.getElementById("profile-name-display");
+    const btn = document.getElementById("btn-profile");
+    
+    if (currentUser) {
+        if(display) display.textContent = currentUser;
+        if(btn) btn.classList.add("logged-in");
+    } else {
+        if(display) display.textContent = "Connexion";
+        if(btn) btn.classList.remove("logged-in");
+    }
+}
+
+// Fonction globale pour ouvrir la modale de connexion
+window.openLoginModal = function() {
+    const content = `
+        <div style="margin-bottom: 20px;">
+            <p>Choisissez votre pseudo pour cette session.</p>
+            <input type="text" id="login-pseudo" value="${currentUser}" placeholder="Votre Pseudo..." style="margin-top:15px; text-align:center;">
+        </div>
+    `;
+    
+    const overlay = document.getElementById('modal-overlay');
+    const titleEl = document.getElementById('modal-title');
+    const contentEl = document.getElementById('modal-content');
+    
+    // CORRECTION ICI : On cherche par ID OU par classe pour être sûr de le trouver
+    const actionsEl = document.getElementById('modal-actions') || document.querySelector('.modal-actions');
+    
+    if(overlay && actionsEl) {
+        titleEl.textContent = "IDENTIFICATION";
+        contentEl.innerHTML = content;
+        
+        // Bouton de validation
+        actionsEl.innerHTML = `<button class="btn" onclick="saveSessionPseudo()">Valider</button>`;
+        
+        overlay.classList.add('active');
+        
+        // Focus sur l'input après un court instant
+        setTimeout(() => {
+            const input = document.getElementById('login-pseudo');
+            if(input) {
+                input.focus();
+                // Ajout : valider avec la touche Entrée
+                input.onkeydown = function(e) {
+                    if(e.key === "Enter") saveSessionPseudo();
+                };
+            }
+        }, 100);
+    } else {
+        console.error("Impossible de trouver les éléments de la modale (overlay ou actions).");
+    }
+};
+
+window.saveSessionPseudo = function() {
+    const input = document.getElementById('login-pseudo');
+    const newName = input.value.trim();
+    
+    if (newName) {
+        currentUser = newName;
+        localStorage.setItem(STORAGE_KEY, currentUser);
+        updateSessionUI();
+        
+        // Mise à jour des inputs sur la page si présents
+        const hubInput = document.getElementById('player-name');
+        if (hubInput) hubInput.value = currentUser;
+        
+        closeModal();
+    } else {
+        input.classList.add('error-shake');
+        setTimeout(() => input.classList.remove('error-shake'), 500);
+    }
+};
+
 
 const params = new URLSearchParams(window.location.search);
 const roomId = params.get("room");
@@ -743,22 +831,39 @@ function closeConfigModal() {
 }
 
 function verifierPseudo() {
+    // Cas 1: On est sur le Hub avec un input
     const nameInput = document.getElementById('player-name');
-    const name = nameInput.value.trim();
+    
+    if (nameInput) {
+        let name = nameInput.value.trim();
+        
+        // Si vide, on regarde si on a une session
+        if (!name && currentUser) {
+            name = currentUser;
+            nameInput.value = name;
+        }
 
-    if (!name) {
-        // 1. On met le focus sur le champ (le navigateur scroll vers lui si besoin)
-        nameInput.focus();
+        if (!name) {
+            // Si toujours vide, on force l'ouverture de la modale de login
+            openLoginModal();
+            return false;
+        }
         
-        // 2. On ajoute l'animation "error-shake" définie dans ton style.css
-        nameInput.classList.add('error-shake');
-        
-        // 3. On retire la classe après l'animation pour pouvoir la rejouer si besoin
-        setTimeout(() => nameInput.classList.remove('error-shake'), 500);
-        
-        return false; // Le pseudo est invalide
+        // Si l'utilisateur a tapé un nouveau nom, on met à jour la session
+        if (name !== currentUser) {
+            currentUser = name;
+            localStorage.setItem(STORAGE_KEY, currentUser);
+            updateSessionUI();
+        }
+        return true;
     }
-    return true; // C'est tout bon
+    
+    // Cas 2: On n'a pas d'input (ex: autre page), on vérifie juste la session
+    if (!currentUser) {
+        openLoginModal();
+        return false;
+    }
+    return true;
 }
 
 

@@ -120,3 +120,82 @@ class DefinitionEngine(GameEngine):
             "hint": self.target["def"],
             "word_length": len(self.target["word"])
         }
+
+# core/games.py
+# Ajoutez les imports manquants si besoin (déjà présents normalement : random, re)
+
+class IntruderEngine(GameEngine):
+    def __init__(self, model):
+        self.model = model
+        self.options = []
+        self.correct_word = None # C'est l'intrus
+        self.theme_word = None
+
+    def new_game(self):
+        vocab_keys = list(self.model.key_to_index.keys())
+        
+        # 1. Choisir un mot thème fréquent (nom commun simple)
+        # On filtre pour avoir des mots de taille raisonnable et alphabétiques
+        while True:
+            candidate = random.choice(vocab_keys)
+            if (len(candidate) >= 4 and candidate.isalpha() 
+                and self.model.get_vecattr(candidate, "count") > 50000):
+                self.theme_word = candidate
+                break
+
+        # 2. Prendre 3 voisins très proches (ex: top 5)
+        # most_similar renvoie [(mot, score), ...]
+        neighbors_raw = self.model.most_similar(self.theme_word, topn=10)
+        # On filtre pour éviter les variantes trop proches (singulier/pluriel) si possible, 
+        # mais pour simplifier on prend juste les 3 premiers valides.
+        neighbors = [w for w, s in neighbors_raw if w != self.theme_word and w.isalpha()][:3]
+
+        # 3. Trouver un intrus (Similarité moyenne entre 0.2 et 0.3)
+        intruder = None
+        safety_counter = 0
+        while not intruder and safety_counter < 100:
+            candidate = random.choice(vocab_keys)
+            if not candidate.isalpha() or len(candidate) < 4: 
+                continue
+                
+            sim = self.model.similarity(self.theme_word, candidate)
+            # L'intrus doit être un peu lié mais pas trop (le piège) 
+            # OU totalement déconnecté si vous voulez un niveau facile.
+            # Ici on suit la consigne : intrus sémantique "qui peut sembler lié" -> 0.2 - 0.4
+            if 0.2 <= sim <= 0.4 and candidate not in neighbors and candidate != self.theme_word:
+                intruder = candidate
+            
+            safety_counter += 1
+        
+        # Fallback si on ne trouve pas
+        if not intruder:
+            intruder = "chat" if "chat" not in neighbors else "chien"
+
+        self.correct_word = intruder
+        self.options = neighbors + [intruder]
+        random.shuffle(self.options)
+        
+        print(f"[INTRUS] Thème: {self.theme_word} | Intrus: {self.correct_word} | Options: {self.options}")
+
+    def guess(self, word: str) -> Dict[str, Any]:
+        if not self.correct_word:
+            return {"exists": False, "error": "Jeu non initialisé"}
+            
+        is_correct = (word == self.correct_word)
+        
+        return {
+            "exists": True,
+            "is_correct": is_correct,
+            "feedback": "Bien joué !" if is_correct else "Non, ce mot est lié au thème.",
+            "similarity": 1.0 if is_correct else 0.0,
+            "temperature": 100.0 if is_correct else 0.0
+        }
+
+    def get_public_state(self) -> Dict[str, Any]:
+        return {
+            "game_type": "intruder",
+            "options": self.options
+        }
+    
+    def next_word(self):
+        self.new_game()

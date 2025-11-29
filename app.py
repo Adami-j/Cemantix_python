@@ -170,6 +170,12 @@ def game_page():
 
 @app.post("/rooms")
 def create_room(payload: CreateRoomRequest):
+
+    needs_model = payload.game_type in ["cemantix", "intruder"]
+    
+    if needs_model and model is None:
+        return JSONResponse(status_code=500, content={"message": "Le modèle sémantique n'est pas chargé."})
+    
     # Vérification du modèle pour Cémantix
     if payload.game_type == "cemantix" and model is None:
         return JSONResponse(status_code=500, content={"message": "Le modèle Cémantix n'est pas chargé sur le serveur."})

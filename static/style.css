@@ -481,3 +481,34 @@ input::placeholder { color: #ccc; opacity: 1; }
     position: relative;
     border-color: var(--accent); /* Garde une bordure colorée subtile après */
 }
+
+/* static/style.css */
+.intruder-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.intruder-btn {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    padding: 30px;
+    font-size: 1.5rem;
+    font-family: var(--font-heading);
+    color: var(--text-main);
+    border-radius: var(--radius-m);
+    cursor: pointer;
+    transition: all 0.2s var(--ease-bounce);
+    box-shadow: var(--shadow-soft);
+    text-transform: capitalize;
+}
+
+.intruder-btn:hover {
+    border-color: var(--accent);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.intruder-btn:active {
+    transform: scale(0.98);
+}

@@ -73,13 +73,16 @@ ws.onmessage = (event) => {
             break;
         case "game_reset":
             performGameReset(data);
+            if (data.mode === "blitz" && data.end_time) {
+                startTimer(data.end_time);
+                document.getElementById('score-display').textContent = "0"; // Reset visuel du score
+            }
             break;
     }
 
         if (data.blitz_success) {
         // 1. Animation confetti petite
-        triggerConfetti(); 
-        
+        //triggerConfetti(); 
         // 2. Mettre à jour le score
         document.getElementById('score-display').textContent = data.team_score;
         
@@ -282,7 +285,6 @@ function startTimer(endTime) {
     const timerEl = document.getElementById('timer-display');
     document.getElementById('blitz-panel').style.display = 'block';
 
-    // On crée une fonction de mise à jour
     const updateTimer = () => {
         const now = Date.now() / 1000;
         const diff = endTime - now;
@@ -290,8 +292,38 @@ function startTimer(endTime) {
         if (diff <= 0) {
             clearInterval(interval);
             timerEl.textContent = "00:00";
-            // Gérer la fin de partie
-            showModal("TEMPS ÉCOULÉ", `Vous avez trouvé ${document.getElementById('score-display').textContent} mots !`);
+            
+            // --- MODIFICATION ICI : Contenu de la modale de fin ---
+            const score = document.getElementById('score-display').textContent;
+            
+            // 1. On affiche la modale
+            showModal("TEMPS ÉCOULÉ", `
+                <div style="margin-bottom: 20px;">
+                    C'est terminé !<br>
+                    Score final : <strong style="color:var(--success); font-size:1.5rem;">${score}</strong> mots.
+                </div>
+            `);
+
+            // 2. On injecte les boutons d'action spécifiques
+            const actionsDiv = document.getElementById('modal-actions');
+            actionsDiv.innerHTML = `
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button id="btn-blitz-replay" class="btn">Rejouer</button>
+                    <button id="btn-hub-return" class="btn btn-outline">Retour au Hub</button>
+                </div>
+            `;
+
+            // 3. On attache les actions
+            document.getElementById('btn-hub-return').onclick = () => window.location.href = "/";
+            
+            document.getElementById('btn-blitz-replay').onclick = function() {
+                // On réutilise la logique de reset existante
+                this.disabled = true;
+                this.textContent = "Chargement...";
+                sendResetRequest(this);
+            };
+            // ------------------------------------------------------
+
         } else {
             const m = Math.floor(diff / 60);
             const s = Math.floor(diff % 60);
@@ -299,9 +331,6 @@ function startTimer(endTime) {
         }
     };
 
-    // 1. On l'appelle tout de suite pour éviter le "00:00"
     updateTimer();
-    
-    // 2. On lance l'intervalle
     const interval = setInterval(updateTimer, 1000);
 }

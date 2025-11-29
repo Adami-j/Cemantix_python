@@ -11,18 +11,32 @@ export function addEntry(entry) {
 export function renderHistory() {
     elements.history.innerHTML = "";
 
-    // Pas de tri automatique, on affiche dans l'ordre d'arrivée (le plus récent en haut)
-    // ou alors on trie par "meilleur score" pour Cémantix uniquement.
-    // Pour l'instant, affichons l'historique chronologique inverse (plus récent en haut).
+    // 1. On crée une copie de la liste pour l'affichage (pour ne pas modifier l'ordre historique des données)
+    let displayEntries = [...state.entries];
+
+    // 2. LOGIQUE DE TRI
+    // Si on est en mode Cémantix, on trie par "progression" (qui correspond au score/degré)
+    if (state.gameType === "cemantix") {
+        displayEntries.sort((a, b) => {
+            // Tri décroissant : le plus grand score en haut
+            return (b.progression || 0) - (a.progression || 0);
+        });
+    }
+    // Sinon (Dictionnario), on garde l'ordre par défaut (chronologique inversé, géré par le unshift dans addEntry)
+
     
-    let index = state.entries.length; 
+    // 3. Affichage
+    // On utilise un index visuel. Attention : si trié, le #index ne correspond plus à l'ordre de tentative mais à la position dans le classement
+    let index = displayEntries.length; 
     
-    for (const entry of state.entries) {
+    for (const entry of displayEntries) {
         const row = document.createElement("div");
+        // Logique de victoire : soit feedback 'Correct !', soit score >= 1000
         const isWin = (entry.game_type === 'definition' && entry.feedback === 'Correct !') || (entry.progression >= 1000);
         
         row.className = `line ${isWin ? 'win' : ''}`;
 
+        // Affichage du numéro de ligne (Classement ou ordre d'arrivée selon le mode)
         const num = `<div class="num">#${index}</div>`;
         const word = `<div class="word">${entry.word} <span style="opacity:0.5; font-size:0.8em">(${entry.player_name})</span></div>`;
         
@@ -38,7 +52,7 @@ export function renderHistory() {
         } else {
             // Affichage Indice Dictionnario
             meta = `<div class="meta" style="color:var(--accent);">${entry.feedback || ""}</div>`;
-            bar = `<div></div>`; // Pas de barre
+            bar = `<div></div>`; 
         }
 
         row.innerHTML = `${num} ${word} ${meta} ${bar}`;

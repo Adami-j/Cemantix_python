@@ -729,3 +729,88 @@ input::placeholder { color: #ccc; opacity: 1; }
         margin: 0 10px;
     }
 }
+
+/* --- HELP BUTTON & MODAL --- */
+
+/* Le bouton flottant */
+.help-float-btn {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--text-main);
+    color: white;
+    border: none;
+    font-family: var(--font-heading);
+    font-size: 1.8rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    transition: all 0.3s var(--ease-bounce);
+    z-index: 1000; /* Au-dessus du reste */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.help-float-btn:hover {
+    transform: scale(1.1) rotate(10deg);
+    background: var(--accent);
+}
+
+/* Styles spécifiques pour le contenu de la modale d'aide */
+.help-modal-content {
+    max-width: 700px; /* Plus large que les autres modales */
+    text-align: left;
+}
+
+.help-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.help-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 700px) {
+    .help-grid { grid-template-columns: 1fr; }
+}
+
+.help-item {
+    display: flex;
+    gap: 15px;
+    align-items: flex-start;
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: var(--radius-m);
+}
+
+.help-item .icon {
+    font-size: 1.5rem;
+    background: white;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    box-shadow: var(--shadow-soft);
+    flex-shrink: 0;
+}
+
+.help-item strong {
+    display: block;
+    color: var(--text-main);
+    margin-bottom: 4px;
+    font-family: var(--font-heading);
+}
+
+.help-item p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+}

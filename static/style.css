@@ -1014,3 +1014,13 @@ input:disabled {
     margin-bottom: 10px;
     display: inline-block;
 }
+
+.btn-disabled {
+    background-color: #b2bec3 !important;
+    border-color: #b2bec3 !important;
+    color: #636e72 !important;
+    cursor: not-allowed;
+    pointer-events: none; /* Désactive le clic */
+    box-shadow: none;
+    transform: none !important;
+}

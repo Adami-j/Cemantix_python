@@ -135,7 +135,7 @@ class RoomManager:
         
         engine: GameEngine
         if game_type == "definition":
-            engine = DefinitionEngine(self.model)
+            engine = DefinitionEngine()
             engine.new_game()
         elif game_type == "intruder":
             engine = IntruderEngine(self.model)

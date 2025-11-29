@@ -1,0 +1,50 @@
+name: Release build
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: Build deployment package
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run checks
+        run: |
+          python -m compileall app.py core
+
+      - name: Create deployment archive
+        run: |
+          mkdir -p dist
+          tar -czf dist/cemantix-python.tar.gz app.py core static requirements.txt README.md
+
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cemantix-python
+          path: dist/cemantix-python.tar.gz
+
+      - name: Attach archive to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: dist/cemantix-python.tar.gz
+          asset_name: cemantix-python.tar.gz
+          asset_content_type: application/gzip

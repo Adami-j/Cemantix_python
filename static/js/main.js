@@ -634,3 +634,23 @@ async function submitHangmanGuess(letter, btnElement) {
         btnElement.disabled = false;
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    const helpBtn = document.getElementById('help-trigger');
+    const helpModal = document.getElementById('help-modal');
+
+    if (helpBtn && helpModal) {
+        // Ouvrir la modale au clic
+        helpBtn.addEventListener('click', (e) => {
+            e.preventDefault(); // Empêche le comportement par défaut
+            helpModal.classList.add('active');
+        });
+
+        // Fermer en cliquant sur le fond gris
+        helpModal.addEventListener('click', (e) => {
+            if (e.target === helpModal) {
+                helpModal.classList.remove('active');
+            }
+        });
+    }
+});

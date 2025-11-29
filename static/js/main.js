@@ -176,25 +176,16 @@ ws.onmessage = (event) => {
         addHistoryMessage(`✨ Mot trouvé ! Au suivant !`, 2000);
     }
     if (data.game_type === "hangman") {
-        // Mettre à jour l'UI avec les infos reçues dans le guess_payload
-        // Astuce : le backend doit renvoyer 'masked_word' et 'lives' dans le payload du guess
-        // Il faut s'assurer que process_guess dans app.py inclut tout le 'result' dans le payload
-        
-        // Mise à jour manuelle simple si on n'a pas tout l'objet state :
+ 
         const bar = document.getElementById("hangman-battery");
-        // On suppose que data.temperature contient le % de vie (calculé dans le moteur)
         if(bar) bar.style.width = `${data.temperature}%`;
         
-        // On désactive la touche correspondante
         const btn = document.getElementById(`key-${data.word.toUpperCase()}`);
         if(btn) {
             btn.disabled = true;
             if(data.similarity > 0) btn.style.borderColor = "var(--success)"; // Bonne lettre
             else btn.style.borderColor = "var(--text-muted)"; // Mauvaise lettre
         }
-        
-        // Le mot masqué se mettra à jour si on renvoie 'masked_word' dans le payload
-        // Modification nécessaire dans app.py -> process_guess -> guess_payload
     }
 };
 

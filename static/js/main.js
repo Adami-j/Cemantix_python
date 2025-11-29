@@ -12,13 +12,21 @@ function checkDailyVictory() {
     const dailyBtn = document.getElementById("btn-daily");
     if (!dailyBtn) return;
 
-    const lastWin = localStorage.getItem(DAILY_WIN_KEY);
-    // On obtient la date du jour au format YYYY-MM-DD
-    const today = new Date().toISOString().split('T')[0];
+    // Réinitialise l'état du bouton par défaut
+    dailyBtn.textContent = "Relever le défi";
+    dailyBtn.classList.remove("btn-disabled");
+    dailyBtn.onclick = () => createGame('cemantix', 'daily');
 
-    if (lastWin === today) {
+    // Si pas d'utilisateur connecté, on ne peut pas vérifier sa victoire spécifique
+    if (!currentUser) return;
+
+    // Format YYYY-MM-DD
+    const today = new Date().toISOString().split('T')[0];
+    const userWinKey = `daily_win_${currentUser}_${today}`;
+
+    if (localStorage.getItem(userWinKey)) {
         dailyBtn.textContent = "Défi du jour accompli ✅";
-        dailyBtn.classList.add("btn-disabled"); // Grise le bouton (voir CSS)
+        dailyBtn.classList.add("btn-disabled"); // Grise le bouton
         dailyBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -175,6 +183,7 @@ window.logout = function() {
     }
 };
 
+// Cherche la fonction window.saveSessionPseudo et ajoute la ligne à la fin
 window.saveSessionPseudo = function() {
     const input = document.getElementById('login-pseudo');
     const newName = input.value.trim();
@@ -184,6 +193,10 @@ window.saveSessionPseudo = function() {
         updateSessionUI();
         const hubInput = document.getElementById('player-name');
         if (hubInput) hubInput.value = currentUser;
+        
+        // AJOUT ICI : On vérifie si ce nouveau pseudo a déjà gagné aujourd'hui
+        checkDailyVictory(); 
+        
         closeModal();
     } else {
         input.classList.add('error-shake');
@@ -429,9 +442,13 @@ function handleVictory(winnerName, scoreboardData) {
     state.locked = true;
     triggerConfetti();
 
+    // --- MODIFICATION 1 : Enregistrement lié au pseudo ---
     if (state.currentMode === "daily") {
-        const today = new Date().toLocaleDateString("fr-CA");
-        localStorage.setItem("arcade_daily_win", today);
+        const today = new Date().toISOString().split('T')[0];
+        // On utilise winnerName (celui qui a trouvé) ou currentUser pour être sûr
+        // Ici on suppose que c'est le joueur local qui voit sa victoire
+        const userWinKey = `daily_win_${currentUser}_${today}`;
+        localStorage.setItem(userWinKey, "true");
     }
 
     let scoreTableHtml = `
@@ -442,7 +459,6 @@ function handleVictory(winnerName, scoreboardData) {
     if (scoreboardData && scoreboardData.length > 0) {
         scoreboardData.forEach((p, index) => {
             const medal = index === 0 ? "🥇" : index === 1 ? "🥈" : index === 2 ? "🥉" : "";
-            // NOTE : J'ai retiré le border-bottom blanc transparent
             scoreTableHtml += `
                 <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #eee; font-family:var(--font-heading); color:var(--text-main);">
                     <span>${medal} ${p.player_name}</span>
@@ -459,25 +475,44 @@ function handleVictory(winnerName, scoreboardData) {
     setTimeout(() => {
         showModal("MISSION ACCOMPLIE", scoreTableHtml, true);
         
-        // ON RÉGÉNÈRE COMPLÈTEMENT LES BOUTONS ICI
-        // Cela garantit qu'ils sont frais et non désactivés pour la nouvelle partie
         const actionsDiv = document.getElementById('modal-actions');
         if (actionsDiv) {
-            actionsDiv.innerHTML = `
-                <div style="display: flex; gap: 10px; justify-content: center;">
-                    <button id="btn-replay" class="btn">Rejouer la partie</button>
-                    <button id="btn-hub" class="btn btn-outline">Retour au Hub</button>
-                </div>
-            `;
-
-            // Attacher les écouteurs
-            document.getElementById('btn-replay').onclick = function() {
-                sendResetRequest(this);
-            };
+            // --- MODIFICATION 2 : Affichage conditionnel des boutons ---
+            let buttonsHtml = "";
             
-            document.getElementById('btn-hub').onclick = function() {
-                window.location.href = "/";
-            };
+            // Si c'est le mode Daily, on affiche SEULEMENT le retour au Hub
+            if (state.currentMode === "daily") {
+                 buttonsHtml = `
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button id="btn-hub" class="btn">Retour au Hub</button>
+                    </div>
+                `;
+            } else {
+                // Sinon (Coop, Blitz...), on affiche Rejouer + Retour
+                buttonsHtml = `
+                    <div style="display: flex; gap: 10px; justify-content: center;">
+                        <button id="btn-replay" class="btn">Rejouer la partie</button>
+                        <button id="btn-hub" class="btn btn-outline">Retour au Hub</button>
+                    </div>
+                `;
+            }
+
+            actionsDiv.innerHTML = buttonsHtml;
+
+            // Attacher les écouteurs (avec vérification d'existence)
+            const replayBtn = document.getElementById('btn-replay');
+            if (replayBtn) {
+                replayBtn.onclick = function() {
+                    sendResetRequest(this);
+                };
+            }
+            
+            const hubBtn = document.getElementById('btn-hub');
+            if (hubBtn) {
+                hubBtn.onclick = function() {
+                    window.location.href = "/";
+                };
+            }
         }
     }, 1000);
 }

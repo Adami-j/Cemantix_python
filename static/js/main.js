@@ -101,23 +101,52 @@ ws.onmessage = (event) => {
 };
 
 function initGameUI(data) {
+    // 1. Mise à jour de l'état global
     state.gameType = data.game_type;
-    const titles = { "cemantix": "Cémantix", "definition": "Dictionnario" };
+
+    // 2. Gestion du Titre
+    const titles = { 
+        "cemantix": "Cémantix", 
+        "definition": "Dictionnario",
+        "intruder": "L'Intrus" 
+    };
     const titleEl = document.getElementById("game-title");
     if (titleEl) titleEl.textContent = titles[data.game_type] || "Jeu";
 
+    // 3. Récupération des éléments d'interface
+    const form = document.getElementById("guess-form");
     const instrBox = document.getElementById("game-instruction");
     const legendPanel = document.getElementById("legend-panel");
+    const intruderArea = document.getElementById("intruder-area"); // Le nouveau conteneur pour l'Intrus
 
-    if (data.game_type === "definition") {
+    // 4. Réinitialisation de l'affichage (Tout masquer par précaution)
+    if (form) form.style.display = "flex"; // Par défaut on affiche le formulaire
+    if (instrBox) instrBox.style.display = "none";
+    if (legendPanel) legendPanel.style.display = "none";
+    if (intruderArea) intruderArea.style.display = "none";
+
+    // 5. Logique spécifique par mode de jeu
+    if (data.game_type === "intruder") {
+        // --- MODE L'INTRUS ---
+        if (form) form.style.display = "none"; // On cache l'input texte car on joue à la souris
+        if (intruderArea) {
+            intruderArea.style.display = "block";
+            // On appelle la fonction de rendu de la grille (définie plus bas dans main.js)
+            if (typeof renderIntruderGrid === "function" && data.public_state) {
+                renderIntruderGrid(data.public_state.options);
+            }
+        }
+
+    } else if (data.game_type === "definition") {
+        // --- MODE DICTIONNARIO ---
         if (instrBox) {
             instrBox.style.display = "block";
             document.getElementById("definition-text").textContent = `"${data.public_state.hint}"`;
             document.getElementById("hint-text").textContent = `Le mot fait ${data.public_state.word_length} lettres.`;
         }
-        if (legendPanel) legendPanel.style.display = "none";
+
     } else {
-        if (instrBox) instrBox.style.display = "none";
+        // --- MODE CÉMANTIX (Par défaut) ---
         if (legendPanel) {
             legendPanel.style.display = "block";
             document.getElementById("legend-content").innerHTML = `
@@ -130,6 +159,46 @@ function initGameUI(data) {
                 <div><span>❄️ Gelé</span> <span>< 0°C</span></div>
             `;
         }
+    }
+}
+
+function renderIntruderGrid(options) {
+    const grid = document.getElementById("intruder-grid");
+    if(!grid || !options) return;
+    
+    grid.innerHTML = "";
+    
+    options.forEach(word => {
+        const btn = document.createElement("button");
+        btn.className = "intruder-btn";
+        btn.textContent = word;
+        btn.onclick = () => submitIntruderGuess(word);
+        grid.appendChild(btn);
+    });
+}
+
+// 3. Fonction d'envoi du guess (similaire au submit du formulaire)
+async function submitIntruderGuess(word) {
+    if (state.locked) return;
+
+    try {
+        const res = await fetch(`/rooms/${roomId}/guess`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ word, player_name: playerName })
+        });
+        const data = await res.json();
+        
+        if (data.error) {
+            showModal("Oups", data.message);
+        } else {
+            // Si c'est pas la victoire, on peut faire un petit effet visuel
+            if (!data.victory) {
+                addHistoryMessage(`❌ "${word}" n'est pas l'intrus !`, 1000);
+            }
+        }
+    } catch (err) {
+        console.error(err);
     }
 }
 

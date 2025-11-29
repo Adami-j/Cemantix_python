@@ -515,26 +515,39 @@ input::placeholder { color: #ccc; opacity: 1; }
 
 /* --- Mode Intrus Spécifique --- */
 
-/* Centrer le jeu en masquant les colonnes latérales */
+/* 1. Centrage global en colonne */
 .game-layout.intruder-focus {
-    display: flex; /* Remplace le grid */
+    display: flex;
+    flex-direction: column; /* Empile les éléments verticalement */
+    align-items: center;    /* Centre horizontalement */
     justify-content: center;
     max-width: 800px;
     margin: 0 auto;
 }
 
+/* 2. On cache les panneaux latéraux inutiles */
 .game-layout.intruder-focus .panel, 
 .game-layout.intruder-focus #history {
-    display: none !important; /* On cache l'historique et les panneaux */
+    display: none !important; 
 }
 
+/* 3. Zone de messages (Score, Timer...) centrée */
 .game-layout.intruder-focus .game-area {
     width: 100%;
+    text-align: center; /* Centre le texte des messages */
+    margin-bottom: 20px;
 }
 
-/* Grille plus large et centrée */
+/* 4. Conteneur des boutons centré et contraint en largeur */
+.game-layout.intruder-focus #intruder-area {
+    width: 100%;
+    max-width: 600px; /* Empêche les boutons d'être trop larges */
+    display: block;   /* S'assure que le bloc prend sa place */
+}
+
+/* 5. Grille des boutons */
 .game-layout.intruder-focus .intruder-grid {
-    gap: 30px;
+    gap: 20px; /* Espace entre les boutons */
 }
 
 /* Styles des boutons (Succès / Erreur) */

@@ -82,43 +82,60 @@ function mapPlaylistToConfig(playlist) {
 
     const config = {
         defaultTrack: typeof playlist.hub === "string" ? playlist.hub : null,
-        modeTracks: {},
+        modeTracks: {}, // Laisser vide pour éviter les conflits globaux
         gameTracks: {},
-        gameModeTracks: {},
-        gameDurationTracks: {},
+        gameModeTracks: {
+            definition: {}, // Pour Dictionnario
+            intruder: {},
+            cemantix: {},
+            hangman: {}
+        },
+        gameDurationTracks: {
+            intruder: {}
+        },
     };
 
-    // Dictionnary / Definition (coop & blitz)
+    // --- 1. Dictionnario (definition) ---
+    // Dans le MD: # Dictionnary -> ## coop / ## blitz
     const dictionnary = playlist.dictionnary || playlist.dictionnario || {};
     if (typeof dictionnary === "object") {
-        if (dictionnary.coop) config.modeTracks.coop = dictionnary.coop;
-        if (dictionnary.blitz) config.modeTracks.blitz = dictionnary.blitz;
-        if (!config.gameTracks.definition && dictionnary.coop) {
+        if (dictionnary.coop) config.gameModeTracks.definition.coop = dictionnary.coop;
+        if (dictionnary.blitz) config.gameModeTracks.definition.blitz = dictionnary.blitz;
+        // Fallback: si on est en definition sans mode précis, on prend coop par défaut
+        if (dictionnary.coop && !config.gameTracks.definition) {
             config.gameTracks.definition = dictionnary.coop;
         }
     }
 
-    // Cémantix
+    // --- 2. Cémantix ---
+    // Dans le MD: # Cemantics (lien direct)
     if (playlist.cemantics || playlist.cemantix) {
-        config.gameTracks.cemantix = playlist.cemantics || playlist.cemantix;
+        // Accepte string (lien direct) ou objet (si sous-sections futures)
+        const track = typeof playlist.cemantics === 'string' ? playlist.cemantics : playlist.cemantix;
+        if (typeof track === 'string') {
+            config.gameTracks.cemantix = track;
+        }
     }
 
-    // Pendu
+    // --- 3. Pendu (hangman) ---
+    // Dans le MD: # Pendu (lien direct)
     if (playlist.pendu) {
-        config.gameTracks.hangman = playlist.pendu;
+        const track = typeof playlist.pendu === 'string' ? playlist.pendu : null;
+        if (track) config.gameTracks.hangman = track;
     }
 
-    // Intrus (durée en minutes)
+    // --- 4. L'Intrus (intruder) ---
+    // Dans le MD: # Intrus -> ## 1 minute / ## 3 minutes...
     const intrus = playlist.intrus || playlist["l'intrus"] || {};
     if (typeof intrus === "object") {
-        config.gameDurationTracks.intruder = {};
         Object.entries(intrus).forEach(([label, url]) => {
             const durationKey = normalizeSeconds(label);
             if (durationKey && url) {
                 config.gameDurationTracks.intruder[durationKey] = url;
             }
         });
-        // Choisir une piste par défaut pour l'intrus si aucune durée ne correspond
+        
+        // Piste par défaut pour l'intrus (la première trouvée)
         const firstIntrusTrack = Object.values(config.gameDurationTracks.intruder)[0];
         if (firstIntrusTrack) {
             config.gameTracks.intruder = firstIntrusTrack;
@@ -180,24 +197,24 @@ function loadSoundtrack(url, autoPlay = false) {
 }
 
 function resolveTrackUrl(config, gameType, mode, durationKey) {
-    const { defaultTrack, modeTracks, gameTracks, gameModeTracks, gameDurationTracks } = config;
+    const { defaultTrack, gameTracks, gameModeTracks, gameDurationTracks } = config;
 
-    if (durationKey && gameDurationTracks[gameType] && gameDurationTracks[gameType][durationKey]) {
+    // 1. Priorité absolue : Durée spécifique pour le jeu (ex: Intrus 3 min)
+    if (gameType && durationKey && gameDurationTracks[gameType] && gameDurationTracks[gameType][durationKey]) {
         return gameDurationTracks[gameType][durationKey];
     }
 
-    if (gameModeTracks[gameType] && gameModeTracks[gameType][mode]) {
+    // 2. Musique spécifique au Mode du Jeu (ex: Dictionnario + Blitz)
+    if (gameType && mode && gameModeTracks[gameType] && gameModeTracks[gameType][mode]) {
         return gameModeTracks[gameType][mode];
     }
 
-    if (modeTracks[mode]) {
-        return modeTracks[mode];
-    }
-
-    if (gameTracks[gameType]) {
+    // 3. Musique par défaut du Jeu (ex: Cémantix ou Pendu)
+    if (gameType && gameTracks[gameType]) {
         return gameTracks[gameType];
     }
 
+    // 4. Sinon, musique du Hub
     return defaultTrack;
 }
 

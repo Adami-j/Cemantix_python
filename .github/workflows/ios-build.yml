@@ -11,11 +11,11 @@ jobs:
     runs-on: macos-latest
     environment: Production
 
-    steps:
+steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # --- 1. Installation des dépendances ---
+      # --- 1. Installation des dépendances JS ---
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -25,7 +25,7 @@ jobs:
         run: npm install
         working-directory: android 
         
-      # --- 2. Installation de Ruby et Fastlane (CORRECTION) ---
+      # --- 2. Installation de Ruby et Fastlane ---
       - name: Setup Ruby Environment
         uses: ruby/setup-ruby@v1
         with:
@@ -34,30 +34,27 @@ jobs:
 
       - name: Install Fastlane
         run: gem install fastlane
+
+      # NOUVEAU : Installe les dépendances définies dans le Gemfile de Fastlane
+      # (Optionnel si votre 'gem install fastlane' n'utilise pas de Gemfile, mais recommandé)
+      - name: Install Bundler dependencies
+        run: bundle install
+        working-directory: android
         
+      # --- 3. Préparation et Synchronisation ---
       - name: Add iOS Platform & Sync Assets
         run: |
           npx cap add ios || true
           npm run sync-ios
         working-directory: android
 
-      # --- 3. Compilation et Déploiement Fastlane (CLÉ) ---
+      # --- 4. Compilation Fastlane (CLÉ DE LA CORRECTION) ---
       - name: Compile IPA with Fastlane
         working-directory: android
         env:
-          # Les secrets sont cruciaux ici pour la signature
           FASTLANE_USER: ${{ secrets.APPLE_ID }}
           FASTLANE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           FASTLANE_TEAM_ID: ${{ secrets.FASTLANE_TEAM_ID }}
         run: |
-          # Exécute la lane 'build_ipa'
-          fastlane ios build_ipa
-
-      # --- 4. Upload de l'Artefact (Utilise le chemin de sortie Fastfile) ---
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        if: success()
-        with:
-          name: arcadehub-ios
-          # CORRECTION du chemin: Il doit pointer vers le dossier défini dans le Fastfile
-          path: ./android/build_output/arcadehub.ipa
+          # UTILISER BUNDLE EXEC COMME SUGGÉRÉ PAR FASTLANE
+          bundle exec fastlane ios build_ipa

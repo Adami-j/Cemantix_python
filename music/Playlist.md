@@ -1,21 +1,21 @@
 # HUB 
-https://on.soundcloud.com/y6cTjSzuqrTvNAEhBe
-https://on.soundcloud.com/iBulywByYneEw2DADI
+https://soundcloud.com/sneezedit/cemantix-python-hub
+https://soundcloud.com/sneezedit/cematix-python-hub-2
 # Intrus
 ## 1 minute 
-https://on.soundcloud.com/lG4zoPWbbnL9P9YCM3
+https://soundcloud.com/sneezedit/cematix-python-intrus-1-minute
 ## 3 minutes
-https://on.soundcloud.com/86d3XHfI0nysC0Wb6r
+https://soundcloud.com/sneezedit/cematix-python-intrus-3
 ## 5 minutes
-https://on.soundcloud.com/bF0Q5sjNXG8yh5GAmP
+https://soundcloud.com/sneezedit/cematix-python-intrus-5
 ## 10 minutes
 # Dictionnary
 
 ## coop
-https://on.soundcloud.com/2MchDgbkCyzW6flEDf
+https://soundcloud.com/sneezedit/cematix-python-trouver-le-mot
 ## blitz
-https://on.soundcloud.com/BOIC3yzjzreQBiyUgH
+https://soundcloud.com/sneezedit/cematix-python-trouver-le-1
 # Cemantics
-https://on.soundcloud.com/2MchDgbkCyzW6flEDf
+https://soundcloud.com/sneezedit/cematix-python-trouver-le-mot
 # Pendu
-https://on.soundcloud.com/xtancivdY7YnQvjrVQ
+https://soundcloud.com/sneezedit/cematix-python-le-pendu

@@ -209,6 +209,12 @@ const params = new URLSearchParams(window.location.search);
 const roomId = params.get("room");
 const playerName = params.get("player");
 
+function updateMusicContext(gameType, mode, duration) {
+    if (window.musicManager && typeof window.musicManager.setContext === "function") {
+        window.musicManager.setContext({ gameType, mode, duration });
+    }
+}
+
 if (window.location.pathname === "/game") {
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get("room");
@@ -250,7 +256,8 @@ function initGameConnection(roomId, playerName) {
                 state.currentMode = data.mode;
                 state.roomLocked = data.locked;
                 if (data.mode === "blitz" && data.end_time) startTimer(data.end_time);
-                
+                updateMusicContext(data.game_type, data.mode, data.duration);
+
                 // Chargement historique chat
                 if (data.chat_history) {
                     data.chat_history.forEach(msg => addChatMessage(msg.player_name, msg.content));

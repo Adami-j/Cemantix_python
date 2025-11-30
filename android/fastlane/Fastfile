@@ -9,7 +9,7 @@ platform :ios do
     build_app(
       # Ces valeurs sont basées sur la structure par défaut de Capacitor
       # Assurez-vous que le nom du workspace est correct (souvent 'App')
-      workspace: "../ios/App.xcworkspace", 
+      workspace: "../ios/App.xcodeproj", 
       scheme: "App",                
       export_method: "ad-hoc",       # 'ad-hoc' pour les tests, ou 'development'
       

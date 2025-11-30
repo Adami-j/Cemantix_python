@@ -24,6 +24,8 @@ except Exception as e:
 
 room_manager = RoomManager(model)
 app.mount("/static", StaticFiles(directory="static"), name="static")
+# Rendre la playlist musicale disponible côté client pour éviter le hardcode des liens
+app.mount("/music", StaticFiles(directory="music"), name="music")
 
 
 class CreateRoomRequest(BaseModel):
@@ -345,18 +347,19 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
 
     # Envoi de l'état initial (Sync)
     try:
-        await websocket.send_json(
-            {
-                "type": "state_sync",
-                "history": history_payload,
-                "scoreboard": build_scoreboard(room),
-                "mode": room.mode,
-                "locked": room.locked,
-                "game_type": room.game_type,
-                "public_state": public_state,
-                "end_time": room.end_time
-            }
-        )
+                await websocket.send_json(
+                    {
+                        "type": "state_sync",
+                        "history": history_payload,
+                        "scoreboard": build_scoreboard(room),
+                        "mode": room.mode,
+                        "locked": room.locked,
+                        "game_type": room.game_type,
+                        "public_state": public_state,
+                        "end_time": room.end_time,
+                        "duration": room.duration,
+                    }
+                )
         
         await connections.broadcast(room_id, {
             "type": "scoreboard_update",

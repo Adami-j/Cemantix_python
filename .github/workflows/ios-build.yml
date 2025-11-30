@@ -55,4 +55,4 @@ jobs:
         with:
           name: ios-build-artifact
           # Le chemin exact vers le fichier .ipa généré par Fastlane
-          path: ${{ github.workspace }}/android/arcadehub.ipa
+          path: Cemantix_python/android/arcadehub.ipa

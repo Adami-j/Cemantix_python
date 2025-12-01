@@ -2,6 +2,7 @@ import json
 import os
 import uuid
 from dataclasses import dataclass, field
+from datetime import date
 from typing import Dict, List, Optional, Any, Set
 
 from core.games import CemantixEngine, DefinitionEngine, GameEngine, IntruderEngine, HangmanEngine

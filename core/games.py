@@ -1,6 +1,5 @@
 import random
 import re
-import uuid
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 import unicodedata
@@ -42,8 +41,6 @@ class CemantixEngine(GameEngine):
     def __init__(self, model):
         self.model = model
         self.target_word: Optional[str] = None
-        self.map_size = 3000
-        self.generate_orbs(50)
 
     # MODIFICATION ICI : Ajout du paramètre 'custom_seed'
     def new_game(self, custom_seed=None):
@@ -66,42 +63,23 @@ class CemantixEngine(GameEngine):
             
         print(f"[CEMANTIX] Mot cible : {self.target_word}")
 
-    def generate_orbs(self, count):
-        for _ in range(count):
-            self.orbs.append({
-                "id": str(uuid.uuid4())[:8],
-                "x": random.randint(0, self.map_size),
-                "y": random.randint(0, self.map_size),
-                "color": random.choice(["#ff7675", "#74b9ff", "#55efc4", "#a29bfe"]),
-                "radius": random.randint(5, 10),
-                "value": 10 
-            })
-
     def guess(self, word: str) -> Dict[str, Any]:
-        orb_id = word
-        remaining_orbs = [o for o in self.orbs if o["id"] != orb_id]
-        
-        if len(remaining_orbs) < len(self.orbs):
-            self.orbs = remaining_orbs
-            # On génère une nouvelle bille pour remplacer celle mangée
-            self.generate_orbs(1)
-            new_orb = self.orbs[-1] # La dernière ajoutée est la nouvelle
+        if not self.target_word:
+            return {"exists": False, "error": "Jeu non initialisé"}
             
-            return {
-                "exists": True, 
-                "consumed": True, 
-                "xp": 10,
-                "new_orb": new_orb # IMPORTANT : On renvoie la nouvelle bille au client
-            }
-            
-        return {"exists": False}
+        if word not in self.model.key_to_index:
+            return {"exists": False, "error": "Mot inconnu"}
+
+        sim = float(self.model.similarity(word, self.target_word))
+        return {
+            "exists": True,
+            "similarity": sim,
+            "temperature": float(round(sim * 100, 2)),
+            "is_correct": sim >= 0.999 # Seuil de victoire
+        }
 
     def get_public_state(self) -> Dict[str, Any]:
-        return {
-            "game_type": "spaceio",
-            "map_size": self.map_size,
-            "orbs": self.orbs
-        }
+        return {"game_type": "cemantix"}
 
 # --- Definition Game Implementation ---
 class DefinitionEngine(GameEngine):
@@ -504,47 +482,3 @@ class HangmanEngine(GameEngine):
         
     def next_word(self):
         self.new_game()
-
-class SpaceIoEngine(GameEngine):
-    def __init__(self, model):
-        self.model = model
-        self.orbs = [] # Liste des billes {x, y, color, radius}
-        self.map_size = 4000
-        self.generate_orbs(50) # Génère 50 billes au départ
-
-    def new_game(self):
-        self.orbs = []
-        self.generate_orbs(50)
-
-    def generate_orbs(self, count):
-        for _ in range(count):
-            self.orbs.append({
-                "id": str(uuid.uuid4())[:8],
-                "x": random.randint(0, self.map_size),
-                "y": random.randint(0, self.map_size),
-                "color": random.choice(["#ff7675", "#74b9ff", "#55efc4", "#a29bfe"]),
-                "radius": random.randint(5, 10),
-                "value": 10 # XP donné
-            })
-
-    def guess(self, word: str) -> Dict[str, Any]:
-        # Dans ce mode, "guess" sert à envoyer des actions (tir, mouvement) ou consommer une bille
-        # Pour simplifier l'exemple, on l'utilise pour valider la consommation d'une bille
-        orb_id = word # On triche un peu sur le nom du paramètre
-        
-        # On cherche la bille mangée
-        remaining_orbs = [o for o in self.orbs if o["id"] != orb_id]
-        
-        if len(remaining_orbs) < len(self.orbs):
-            self.orbs = remaining_orbs
-            self.generate_orbs(1) # On en recrée une pour l'infini
-            return {"exists": True, "consumed": True, "xp": 10}
-            
-        return {"exists": False}
-
-    def get_public_state(self) -> Dict[str, Any]:
-        return {
-            "game_type": "spaceio",
-            "map_size": self.map_size,
-            "orbs": self.orbs
-        }

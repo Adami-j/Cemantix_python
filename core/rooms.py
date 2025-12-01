@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 from datetime import date
 from typing import Dict, List, Optional, Any, Set
 
-from core.games import CemantixEngine, DefinitionEngine, GameEngine, IntruderEngine, HangmanEngine, SpaceIoEngine
+from core.games import CemantixEngine, DefinitionEngine, GameEngine, IntruderEngine, HangmanEngine
 
 @dataclass
 class ChatMessage:
@@ -20,25 +20,13 @@ class ChatMessage:
 class PlayerStats:
     attempts: int = 0
     best_similarity: float = 0.0
-    level: int = 1
-    score: int = 0
 
     def to_dict(self):
-        return {
-            "attempts": self.attempts, 
-            "best_similarity": self.best_similarity,
-            "level": self.level,
-            "score": self.score
-        }
+        return {"attempts": self.attempts, "best_similarity": self.best_similarity}
 
     @classmethod
     def from_dict(cls, data: Dict):
-        return cls(
-            attempts=data.get("attempts", 0), 
-            best_similarity=data.get("best_similarity", 0.0),
-            level=data.get("level", 1),
-            score=data.get("score", 0)
-        )
+        return cls(attempts=data.get("attempts", 0), best_similarity=data.get("best_similarity", 0.0))
 
 @dataclass
 class GuessEntry:
@@ -184,13 +172,9 @@ class RoomManager:
         elif game_type == "cemantix":
             engine = CemantixEngine(self.model)
             engine.new_game(custom_seed=custom_seed) # Passe la seed si mode daily
-        elif game_type == "spaceio":  # <--- AJOUT
-            engine = SpaceIoEngine(self.model)
-            # Pas de new_game() ici car initialisé dans __init__, ou alors on l'appelle pour reset
         else:
             engine = HangmanEngine(self.model)
             engine.new_game()
-        
         
         # Initialisation correcte avec game_type
         room = RoomState(

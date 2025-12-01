@@ -1,18 +1,22 @@
 import asyncio
 import uvicorn
+import os
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from starlette.staticfiles import StaticFiles
 from typing import Dict, List, Any, Optional
 import time
-from datetime import date
+from datetime import date, datetime
 import httpx
 
 from core.model_loader import ModelLoader
 from core.rooms import RoomManager, RoomState
 
 app = FastAPI()
+
+# Load Discord webhook URL from environment variable
+DISCORD_WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL", "")
 
 # Chargement du modèle avec gestion d'erreur si le fichier est absent
 try:

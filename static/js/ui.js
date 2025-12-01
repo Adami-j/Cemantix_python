@@ -41,6 +41,15 @@ export function showModal(title, contentHTML, isVictory = false) {
     titleEl.textContent = title;
     contentEl.innerHTML = contentHTML;
 
+    if (iconEl) {
+        if (isVictory) {
+            iconEl.style.display = "block";
+            iconEl.textContent = "🏆";
+        } else {
+            iconEl.style.display = "none";
+        }
+    }
+
     if (isVictory) {
         iconEl.style.display = "block";
         iconEl.textContent = "🏆";

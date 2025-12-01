@@ -777,6 +777,40 @@ async function submitHangmanGuess(letter, btnElement) {
     }
 }
 
+async function copyToClipboard(text) {
+    // Méthode 1 : API moderne (si disponible et sécurisée)
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        try {
+            await navigator.clipboard.writeText(text);
+            return true;
+        } catch (err) {
+            console.warn("Clipboard API failed, switching to fallback", err);
+        }
+    }
+    
+    // Méthode 2 : Fallback compatible partout (HTTP, vieilles WebViews)
+    try {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        
+        // On cache l'élément mais il doit être visible pour que execCommand fonctionne
+        textArea.style.position = "fixed";
+        textArea.style.left = "-9999px";
+        textArea.style.top = "0";
+        document.body.appendChild(textArea);
+        
+        textArea.focus();
+        textArea.select();
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        return successful;
+    } catch (err) {
+        console.error("Fallback copy failed", err);
+        return false;
+    }
+}
+
 // --- FONCTION D'INITIALISATION GLOBALE (SPA) ---
 export function initApp() {
     console.log("Initialisation de l'application...");
@@ -805,40 +839,48 @@ export function initApp() {
         const newBadge = roomBadge.cloneNode(true);
         roomBadge.parentNode.replaceChild(newBadge, roomBadge);
         
-        newBadge.addEventListener("click", () => {
+        newBadge.addEventListener("click", async () => {
             const idSpan = document.getElementById("display-room-id");
             const idText = idSpan ? idSpan.textContent : "";
             
             if (idText && idText !== "..." && idText !== "Déconnecté") {
-                navigator.clipboard.writeText(idText).then(() => {
-                    
-                    // 1. Sauvegarde du contenu original (le HTML complet avec le <span>)
+                // Utilisation de la fonction robuste
+                const success = await copyToClipboard(idText);
+                
+                if (success) {
+                    // 1. Sauvegarde du contenu original
                     const originalHTML = newBadge.innerHTML;
+                    const originalWidth = newBadge.offsetWidth; // Fixe la largeur pour éviter le "saut"
                     
-                    // 2. Feedback Visuel : Changement de texte et style
-                    newBadge.style.transition = "all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)"; // Effet rebond
+                    newBadge.style.width = `${originalWidth}px`;
+                    newBadge.style.textAlign = "center";
+
+                    // 2. Animation "Copié !"
+                    newBadge.style.transition = "all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
                     newBadge.style.transform = "scale(1.1)";
                     newBadge.style.backgroundColor = "var(--success)";
                     newBadge.style.color = "white";
                     newBadge.style.borderColor = "var(--success)";
-                    newBadge.textContent = "Copié !"; // Remplace tout le contenu par le message
                     
-                    // 3. Retour à la normale après 1.5 seconde
+                    // On change le texte
+                    newBadge.textContent = "Copié !";
+                    
+                    // 3. Retour à la normale après 1.5s
                     setTimeout(() => {
                         newBadge.style.transform = "scale(1)";
-                        newBadge.style.backgroundColor = ""; // Retour couleur CSS
+                        newBadge.style.backgroundColor = "";
                         newBadge.style.color = "";
                         newBadge.style.borderColor = "";
-                        newBadge.innerHTML = originalHTML; // Restaure le "ID: <span...>"
+                        newBadge.style.width = ""; // Relâche la largeur
+                        newBadge.innerHTML = originalHTML; // Restaure le HTML avec le <span>
                         
-                        // IMPORTANT : Comme on a remplacé le HTML, on a détruit l'ancien <span>
-                        // Il faut remettre à jour la référence dans 'elements' pour que les mises à jour futures marchent
+                        // TRES IMPORTANT : Reconnecter la référence DOM pour les futures mises à jour WS
                         elements.roomInfo = document.getElementById("display-room-id");
                     }, 1500);
-                }).catch(err => {
-                    console.error("Erreur copie : ", err);
-                    addHistoryMessage(`ID : ${idText}`); // Fallback si le presse-papier est bloqué
-                });
+                } else {
+                    // En cas d'échec total (rare), on affiche juste l'ID dans les logs
+                    addHistoryMessage(`ID : ${idText}`, 5000);
+                }
             }
         });
     }

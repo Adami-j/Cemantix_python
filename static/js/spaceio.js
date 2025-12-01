@@ -122,6 +122,12 @@ export function initSpaceIo(serverOrbs, size, localName) {
         if (animationId) cancelAnimationFrame(animationId);
     };
 
+    const startScreen = document.getElementById("io-start-screen");
+    if (startScreen) {
+        startScreen.style.display = "flex";
+        startScreen.style.zIndex = "5010"; // On s'assure qu'il est bien au-dessus
+    }
+
     window.startGameIo = (className) => {
         player.class = className;
         applyClassStats(className);

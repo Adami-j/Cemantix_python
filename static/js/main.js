@@ -355,6 +355,7 @@ function initGameUI(data) {
         }
     } else if (data.game_type === "spaceio") {
         if (mainContainer) mainContainer.style.display = "none";
+        if(form) form.style.display = "none";
         document.querySelectorAll(".user-controls, .site-footer, #music-toggle").forEach(el => { if(el) el.style.display = "none"; });
 
         const area = document.getElementById("spaceio-area");
@@ -409,6 +410,7 @@ function initGameUI(data) {
             document.getElementById("definition-text").textContent = `"${data.public_state.hint}"`;
             document.getElementById("hint-text").textContent = `Le mot fait ${data.public_state.word_length} lettres.`;
         } else {
+            if (area) area.style.display = "none";
             document.getElementById("legend-panel").style.display = "block";
              document.getElementById("legend-content").innerHTML = `
                 <div><span>💥 Top 1</span> <span>100°C</span></div>

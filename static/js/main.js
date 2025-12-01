@@ -257,7 +257,10 @@ function initGameConnection(roomId, playerName) {
                 setRoomInfo(`${roomId} • ${data.mode === 'race' ? 'Course' : 'Coop'}`); 
 
                 if (data.history && Array.isArray(data.history)) {
-                    state.entries = data.history.reverse();
+                    state.entries = data.history.map(entry => ({
+                        ...entry,
+                        temp: entry.temperature
+                    })).reverse();
                     renderHistory();
                 }
 
@@ -792,6 +795,36 @@ export function initApp() {
     
     updateSessionUI();
     checkDailyVictory();
+
+    const roomBadge = document.getElementById("room-badge");
+    if (roomBadge) {
+        roomBadge.style.cursor = "pointer";
+        roomBadge.title = "Copier l'ID";
+        
+        // On supprime les anciens listeners pour éviter les doublons (utile en SPA)
+        const newBadge = roomBadge.cloneNode(true);
+        roomBadge.parentNode.replaceChild(newBadge, roomBadge);
+        
+        newBadge.addEventListener("click", () => {
+            const idText = document.getElementById("display-room-id").textContent;
+            if (idText && idText !== "..." && idText !== "Déconnecté") {
+                navigator.clipboard.writeText(idText).then(() => {
+                    // Feedback visuel
+                    addHistoryMessage("📋 ID copié dans le presse-papier !", 2000);
+                    
+                    // Petit effet flash sur le badge
+                    newBadge.style.backgroundColor = "var(--success)";
+                    newBadge.style.color = "white";
+                    newBadge.style.transition = "all 0.3s";
+                    
+                    setTimeout(() => {
+                        newBadge.style.backgroundColor = "#f0f0f0"; // Retour couleur originale (voir CSS)
+                        newBadge.style.color = "var(--text-main)";
+                    }, 500);
+                });
+            }
+        });
+    }
 
     // --- LOGIQUE SPECIFIQUE : HUB ---
     if (window.location.pathname === "/" || window.location.pathname === "/index.html") {

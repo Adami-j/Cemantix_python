@@ -81,7 +81,7 @@ export function openWebsocket(playerName) {
     };
 }
 
-function initGameConnection(roomId, playerName) {
+export function initGameConnection(roomId, playerName) {
     if(document.getElementById("display-room-id")) {
         document.getElementById("display-room-id").textContent = roomId;
     }

@@ -88,8 +88,6 @@ export function openGameConfig(type) {
 
     if (type === 'duel') {
 
-        if(title) title.textContent = "⚔️ Duel de Concepts";
-
         // On masque les éléments standards
         [modeGroup, durationGroup, desc].forEach(el => { if(el) el.style.display = 'none'; });
 
@@ -106,9 +104,6 @@ export function openGameConfig(type) {
             <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
                 <button id="btn-invite" class="btn" style="background: #a29bfe;">🤝 Inviter un ami</button>
                 <button id="btn-random" class="btn" style="background: #ff7675;">🎲 Adversaire Aléatoire</button>
-            </div>
-            <div style="text-align: center; margin-top: 20px;">
-                <button class="btn-close btn btn-outline">Annuler</button>
             </div>
         `;
 

@@ -135,6 +135,12 @@ export function renderIntruderGrid(options) {
     });
 }
 
+export function updateMusicContext(gameType, mode, duration) {
+    if (window.musicManager && typeof window.musicManager.setContext === "function") {
+        window.musicManager.setContext({ gameType, mode, duration });
+    }
+}
+
 async function submitIntruderGuess(word, buttonElement) {
     if (state.locked || !state.currentRoomId) return;
     buttonElement.disabled = true;

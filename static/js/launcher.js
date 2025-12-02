@@ -70,38 +70,49 @@ export function openGameConfig(type) {
         const originalContent = contentDiv.innerHTML;
         
         contentDiv.innerHTML = `
-            <h2>⚔️ Duel de Concepts</h2>
-            <p style="text-align:center; margin-bottom: 20px;">
+            <h2 style="text-align: center; margin-bottom: 30px;">⚔️ Duel de Concepts</h2>
+            <p style="text-align:center; margin-bottom: 20px; color: var(--text-muted);">
                 Affrontez un autre joueur en temps réel.<br>
                 Trouvez le mot le plus proche du thème en 60 secondes.
             </p>
             
-            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 20px;">
                 <button id="btn-invite" class="btn" style="background: #a29bfe;">🤝 Inviter un ami</button>
                 <button id="btn-random" class="btn" style="background: #ff7675;">🎲 Adversaire Aléatoire</button>
             </div>
-            <button class="btn-close btn btn-outline" style="margin-top:20px;">Annuler</button>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn-close btn btn-outline">Annuler</button>
+            </div>
         `;
 
-        // Gestionnaire pour "Inviter un ami" (Créer une salle privée)
-        contentDiv.querySelector('#btn-invite').onclick = () => {
-            // On lance la création classique, mais on force les params
-            closeConfigModal();
-            // On restaure le contenu pour la prochaine fois (optionnel si tu recharges la page)
-             setTimeout(() => contentDiv.innerHTML = originalContent, 500);
-            createGame('duel', 'blitz', 60);
-        };
-
+        const inviteBtn = contentDiv.querySelector('#btn-invite');
+        if (inviteBtn) {
+            inviteBtn.onclick = () => {
+                closeConfigModal();
+                setTimeout(() => contentDiv.innerHTML = originalContent, 500);
+                createGame('duel', 'blitz', 60);
+            };
+        }
         // Gestionnaire pour "Aléatoire"
-        contentDiv.querySelector('#btn-random').onclick = () => {
-            joinRandomDuel();
-             setTimeout(() => contentDiv.innerHTML = originalContent, 500);
-        };
+        const randomBtn = contentDiv.querySelector('#btn-random');
+        if (randomBtn) {
+            randomBtn.onclick = () => {
+                if (typeof joinRandomDuel === 'function') {
+                    joinRandomDuel();
+                } else {
+                    console.error("joinRandomDuel n'est pas défini");
+                }
+                setTimeout(() => contentDiv.innerHTML = originalContent, 500);
+            };
+        }
 
-        contentDiv.querySelector('.btn-close').onclick = () => {
-            closeConfigModal();
-            setTimeout(() => contentDiv.innerHTML = originalContent, 500);
-        };
+        const closeBtn = contentDiv.querySelector('.btn-close');
+        if (closeBtn) {
+            closeBtn.onclick = () => {
+                closeConfigModal();
+                setTimeout(() => contentDiv.innerHTML = originalContent, 500);
+            };
+        }
         return;
     } else if (type === 'intruder') {
         if(title) title.textContent = "L'Intrus : Contre la montre";

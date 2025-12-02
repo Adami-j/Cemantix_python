@@ -16,6 +16,8 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
 
+print(env_path)
+
 webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
 if webhook_url:
     print(f"✅ Webhook chargé : {webhook_url[:30]}...")

@@ -395,18 +395,9 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
         await websocket.send_json({"error": "room_not_found", "message": "Room inconnue"})
         await websocket.close()
         return
-    
-    if player_name in room.active_players:
-        await websocket.accept()
-        await websocket.send_json({
-            "error": "duplicate_pseudo", 
-            "message": f"Le pseudo '{player_name}' est déjà utilisé dans cette partie."
-        })
-        await websocket.close()
-        return
+
 
     await connections.connect(room_id, websocket)
-    room.active_players.add(player_name)
     room.add_player(player_name)
     
     # Récupération de l'état initial spécifique au jeu (ex: définition)

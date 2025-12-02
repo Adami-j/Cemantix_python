@@ -67,7 +67,7 @@ export function logout() {
     }
 }
 
-window.saveSessionPseudo = function() {
+export function saveSessionPseudo() {
     const input = document.getElementById('login-pseudo');
     const newName = input.value.trim();
     if (newName) {

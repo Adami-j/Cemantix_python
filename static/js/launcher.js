@@ -1,22 +1,40 @@
-import { openGameConfig, toggleDurationDisplay } from "./launcher.js";
-import { currentConfigType } from "./main.js";
+import { createGame } from "./api.js";
 import { verifierPseudo } from "./session.js";
+import { closeConfigModal } from "./modal.js";
+import { currentUser } from "./session.js";
 
+// Variable locale pour stocker le type en cours
 let currentConfigType = "definition";
 
-async function submitGameConfig() {
+export function toggleDurationDisplay() {
     const mode = document.getElementById('config-mode').value;
-    let duration = 0;
-    if (mode === 'blitz') {
-        duration = parseInt(document.getElementById('config-duration').value);
-    }
-    closeConfigModal();
-    if (window.createGame) {
-        await window.createGame(currentConfigType, mode, duration);
+    const durationGroup = document.getElementById('duration-group');
+    const desc = document.getElementById('mode-desc');
+
+    if (currentConfigType === 'definition') {
+        if (mode === 'blitz') {
+            if(durationGroup) durationGroup.style.display = 'block';
+            if(desc) desc.textContent = "Trouvez un maximum de mots dans le temps imparti.";
+        } else {
+            if(durationGroup) durationGroup.style.display = 'none';
+            if(desc) desc.textContent = "Trouvez un mot unique ensemble sans limite de temps.";
+        }
     }
 }
 
-function openGameConfig(type) {
+export async function submitGameConfig() {
+    const mode = document.getElementById('config-mode').value;
+    let duration = 0;
+
+    if (mode === 'blitz') {
+        duration = parseInt(document.getElementById('config-duration').value);
+    }
+
+    closeConfigModal();
+    await createGame(currentConfigType, mode, duration);
+}
+
+export function openGameConfig(type) {
     if (!verifierPseudo()) return;
     
     currentConfigType = type;
@@ -27,28 +45,51 @@ function openGameConfig(type) {
     const desc = document.getElementById('mode-desc');
     const modeSelect = document.getElementById('config-mode');
 
-    modal.classList.add('active');
+    if(modal) modal.classList.add('active');
 
     if (type === 'intruder') {
-        title.textContent = "L'Intrus : Contre la montre";
-        modeGroup.style.display = 'none'; 
-        modeSelect.value = 'blitz'; 
-        durationGroup.style.display = 'block';
-        desc.textContent = "Trouvez un maximum d'intrus avant la fin du temps imparti !";
+        if(title) title.textContent = "L'Intrus : Contre la montre";
+        if(modeGroup) modeGroup.style.display = 'none'; 
+        if(modeSelect) modeSelect.value = 'blitz';
+        if(durationGroup) durationGroup.style.display = 'block';
+        if(desc) desc.textContent = "Trouvez un maximum d'intrus avant la fin du temps imparti !";
     } else {
-        title.textContent = "Config. Dictionnario";
-        modeGroup.style.display = 'block';
-        modeSelect.value = 'coop';
+        if(title) title.textContent = "Config. Dictionnario";
+        if(modeGroup) modeGroup.style.display = 'block';
+        if(modeSelect) modeSelect.value = 'coop';
         toggleDurationDisplay();
     }
 }
-function openDictioConfig() {
+
+export function openDictioConfig() {
     if (!verifierPseudo()) return;
     const modal = document.getElementById('config-modal');
-    modal.classList.add('active');
+    if(modal) modal.classList.add('active');
+    
     currentConfigType = "definition"; 
-    openGameConfig('definition');
-    document.getElementById('config-mode').value = "coop";
-    toggleDurationDisplay();
+    
+    // Reset UI
+    const modeSelect = document.getElementById('config-mode');
+    const title = document.getElementById('config-modal-title');
+    const modeGroup = document.getElementById('mode-group');
+    
+    if(title) title.textContent = "Config. Dictionnario";
+    if(modeGroup) modeGroup.style.display = 'block';
+    if(modeSelect) {
+        modeSelect.value = "coop";
+        toggleDurationDisplay();
+    }
 }
+function launchDictio() {
+    const modeSelect = document.getElementById('dictio-mode').value;
+    let mode = 'coop'; // Mode par défaut
+    let duration = 0;
 
+    if (modeSelect.startsWith('blitz')) {
+        mode = 'blitz';
+        // On extrait le chiffre (3 ou 5) et on convertit en secondes
+        duration = parseInt(modeSelect.split('_')[1]) * 60; 
+    }
+
+    createGame('definition', mode, duration);
+}

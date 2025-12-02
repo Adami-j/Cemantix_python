@@ -36,7 +36,6 @@ window.toggleChat = function() {
     
     if (chat) {
         chat.classList.toggle("collapsed");
-        // Change la flèche selon l'état
         if (icon) {
             icon.textContent = chat.classList.contains("collapsed") ? "▲" : "▼";
         }
@@ -69,15 +68,3 @@ if (chatForm) {
         }
     });
 }
-
-window.toggleChat = function() {
-    const chat = document.getElementById("chat-container");
-    const icon = document.getElementById("chat-toggle-icon");
-    
-    if (chat) {
-        chat.classList.toggle("collapsed");
-        if (icon) {
-            icon.textContent = chat.classList.contains("collapsed") ? "▲" : "▼";
-        }
-    }
-};

@@ -3,14 +3,14 @@ import { state } from "./state.js";
 import { addHistoryMessage, setRoomInfo, showModal, closeModal } from "./ui.js";
 import { addEntry, renderHistory, renderScoreboard } from "./rendering.js";
 import { initChat, addChatMessage } from "./chat_ui.js";
-import { initApp, verifierPseudo, currentUser, logout, updateSessionUI } from "./session.js"; // J'ai ajouté initApp dans main mais verifierPseudo est dans session
+import { verifierPseudo, currentUser, logout, updateSessionUI, saveSessionPseudo } from "./session.js";
 import { copyToClipboard } from "./utils.js";
-import { 
-    initGameUI, handleDefeat, handleBlitzSuccess, updateHangmanUI,
-    performGameReset, updateResetStatus, startTimer, sendResetRequest
-} from "./game_logic.js";
-import { openGameConfig, openDictioConfig, closeConfigModal, submitGameConfig, toggleDurationDisplay, launchDictio, createGame } from "./launcher.js";
+import { initGameUI, handleDefeat, handleBlitzSuccess, updateHangmanUI, performGameReset, updateResetStatus, startTimer, sendResetRequest } from "./game_logic.js";
+import { openGameConfig, openDictioConfig, closeConfigModal, submitGameConfig, toggleDurationDisplay, launchDictio } from "./launcher.js";
 import { checkDailyVictory, handleVictory } from "./victory.js";
+import { openWebsocket } from "./websocket.js";
+import { createGame } from "./api.js";
+import { openLoginModal } from "./modal.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     updateSessionUI();
@@ -52,108 +52,6 @@ function updateMusicContext(gameType, mode, duration) {
     if (window.musicManager && typeof window.musicManager.setContext === "function") {
         window.musicManager.setContext({ gameType, mode, duration });
     }
-}
-
-function initGameConnection(roomId, playerName) {
-    if(document.getElementById("display-room-id")) {
-        document.getElementById("display-room-id").textContent = roomId;
-    }
-
-    setRoomInfo(`Connexion à la Room ${roomId}...`);
-
-    const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-    const wsUrl = `${protocol}://${window.location.host}/rooms/${roomId}/ws?player_name=${encodeURIComponent(playerName)}`;
-    
-    // Fermeture propre de l'ancien socket s'il existe
-    if (state.websocket) {
-        state.websocket.close();
-    }
-
-    const ws = new WebSocket(wsUrl);
-    state.websocket = ws; 
-
-    ws.onopen = () => { console.log("WS Connecté"); };
-    
-    ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-
-        if (data.error) {
-            showModal("Erreur", data.message || "Erreur inconnue");
-            return;
-        }
-
-        switch (data.type) {
-            case "state_sync":
-                initGameUI(data);
-                renderHistory(data.history || []);
-                renderScoreboard(data.scoreboard || []);
-                state.currentMode = data.mode;
-                state.roomLocked = data.locked;
-                if (data.mode === "blitz" && data.end_time) startTimer(data.end_time);
-                updateMusicContext(data.game_type, data.mode, data.duration);
-                
-                // On met à jour le statut maintenant que la connexion est confirmée
-                setRoomInfo(`${roomId} • ${data.mode === 'race' ? 'Course' : 'Coop'}`); 
-
-                if (data.history && Array.isArray(data.history)) {
-                    state.entries = data.history.map(entry => ({
-                        ...entry,
-                        temp: entry.temperature
-                    })).reverse();
-                    renderHistory();
-                }
-
-                if (data.chat_history) {
-                    data.chat_history.forEach(msg => addChatMessage(msg.player_name, msg.content));
-                }
-                break;
-
-            case "guess":
-                addEntry({
-                    word: data.word,
-                    temp: data.temperature,
-                    progression: data.progression,
-                    player_name: data.player_name,
-                    feedback: data.feedback,
-                    game_type: data.game_type
-                });
-                if (data.team_score !== undefined) {
-                    const scoreEl = document.getElementById('score-display');
-                    if (scoreEl) scoreEl.textContent = data.team_score;
-                }
-                // Mise à jour Pendu
-                if (data.game_type === "hangman") updateHangmanUI(data);
-                // Défaite
-                if (data.defeat) handleDefeat(data);
-                break;
-
-            case "scoreboard_update":
-                renderScoreboard(data.scoreboard || []);
-                state.roomLocked = data.locked;
-                if (data.victory && data.winner) handleVictory(data.winner, data.scoreboard);
-                break;
-
-            case "victory": // Fallback
-                handleVictory(data.winner, state.scoreboard || []);
-                break;
-
-            case "chat_message":
-                addChatMessage(data.player_name, data.content);
-                break;
-                
-            case "game_reset":
-                performGameReset(data);
-                break;
-                
-            case "reset_update":
-                updateResetStatus(data);
-                break;
-        }
-
-        if (data.blitz_success) handleBlitzSuccess(data);
-    };
-
-    ws.onclose = () => { setRoomInfo("Déconnecté"); };
 }
 
 export function initApp() {
@@ -359,20 +257,6 @@ function toggleDurationDisplay() {
     }
 }
 
-function launchDictio() {
-    const modeSelect = document.getElementById('dictio-mode').value;
-    let mode = 'coop'; // Mode par défaut
-    let duration = 0;
-
-    if (modeSelect.startsWith('blitz')) {
-        mode = 'blitz';
-        // On extrait le chiffre (3 ou 5) et on convertit en secondes
-        duration = parseInt(modeSelect.split('_')[1]) * 60; 
-    }
-
-    createGame('definition', mode, duration);
-}
-
 window.createGame = async function(type, mode = 'coop', duration = 0) {
     if (!verifierPseudo()) return;
     
@@ -417,4 +301,7 @@ window.openDictioConfig = openDictioConfig;
 window.closeConfigModal = closeConfigModal;
 window.submitGameConfig = submitGameConfig;
 window.toggleDurationDisplay = toggleDurationDisplay;
+window.openLoginModal = openLoginModal;
 window.closeModal = closeModal;
+window.logout = logout;
+window.saveSessionPseudo = saveSessionPseudo;

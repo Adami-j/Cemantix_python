@@ -10,12 +10,20 @@ import time
 from datetime import date, datetime
 import httpx
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+env_path = Path(__file__).parent / ".env"
+load_dotenv(dotenv_path=env_path)
+
+webhook_url = os.environ.get("DISCORD_WEBHOOK_URL")
+if webhook_url:
+    print(f"✅ Webhook chargé : {webhook_url[:30]}...")
+else:
+    print("❌ Webhook NON trouvé. Vérifiez le fichier .env")
 
 # Configurez l'URL du webhook Discord ici ou via une variable d'environnement
-DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", None)
+DISCORD_WEBHOOK_URL = webhook_url
 waiting_duel_room_id: Optional[str] = None
 
 from core.model_loader import ModelLoader
@@ -241,15 +249,13 @@ def join_random_duel(payload: CreateRoomRequest):
 async def report_bug(report: BugReportRequest):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     log_entry = f"[{timestamp}] User: {report.player_name} | Context: {report.context} | Bug: {report.description}\n"
-    
-    # 1. Sauvegarde locale dans un fichier
+
     try:
         with open("bugs.log", "a", encoding="utf-8") as f:
             f.write(log_entry)
     except Exception as e:
         print(f"Erreur écriture log: {e}")
 
-    # 2. Envoi vers Discord (si configuré)
     if DISCORD_WEBHOOK_URL:
         async with httpx.AsyncClient() as client:
             try:
@@ -265,7 +271,12 @@ async def report_bug(report: BugReportRequest):
                         "footer": {"text": timestamp}
                     }]
                 }
-                await client.post(DISCORD_WEBHOOK_URL, json=discord_payload)
+                print(f"Tentative d'envoi vers {DISCORD_WEBHOOK_URL}...")
+                response = await client.post(DISCORD_WEBHOOK_URL, json=discord_payload)
+                if response.status_code in [200, 204]:
+                    print("✅ Message Discord envoyé !")
+                else:
+                    print(f"⚠️ Erreur Discord: {response.status_code} - {response.text}")
             except Exception as e:
                 print(f"Erreur envoi Discord: {e}")
 

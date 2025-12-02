@@ -359,6 +359,25 @@ async def reset_room(room_id: str, payload: ResetRequest):
             "waiting_for": waiting_for
         })
         return {"status": "waiting"}
+    
+
+@app.get("/rooms/{room_id}/check_pseudo")
+def check_pseudo_availability(room_id: str, player_name: str):
+    room = room_manager.get_room(room_id)
+
+    if not room:
+        return JSONResponse(status_code=404, content={"available": False, "message": "Room introuvable"})
+    
+    if player_name in room.active_players:
+        return JSONResponse(
+            status_code=409, 
+            content={
+                "available": False, 
+                "message": f"Le pseudo '{player_name}' est déjà pris par un joueur connecté."
+            }
+        )
+    
+    return {"available": True}
 
 @app.websocket("/rooms/{room_id}/ws")
 async def websocket_endpoint(websocket: WebSocket, room_id: str):

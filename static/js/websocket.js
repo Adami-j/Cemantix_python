@@ -109,16 +109,6 @@ export function initGameConnection(roomId, playerName) {
             return;
         }
 
-        if (data.error) {
-            if (data.error === "duplicate_pseudo") {
-                alert("⛔ " + data.message);
-                window.location.href = "/";
-            } else {
-                showModal("Erreur", data.message || "Erreur inconnue");
-            }
-            return;
-        }
-
         switch (data.type) {
             case "state_sync":
                 initGameUI(data);

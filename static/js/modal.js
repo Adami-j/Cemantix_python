@@ -1,7 +1,7 @@
 import { showModal, closeModal } from "./ui.js";
 import { state } from "./state.js";
 
-window.openLoginModal = function() {
+export function openLoginModal() {
     const isInGame = window.location.pathname === "/game";
     const overlay = document.getElementById('modal-overlay');
     const titleEl = document.getElementById('modal-title');

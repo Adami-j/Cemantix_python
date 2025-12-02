@@ -14,7 +14,7 @@ import { openLoginModal, closeConfigModal } from "./modal.js";
 
 document.addEventListener("DOMContentLoaded", () => {
     updateSessionUI();
-    checkDailyVictory(); // Vérifie si le défi est déjà fait
+    checkDailyVictory();
     
     // Pré-remplissage du pseudo sur le Hub
     const nameInput = document.getElementById('player-name');
@@ -57,7 +57,6 @@ function updateMusicContext(gameType, mode, duration) {
 export function initApp() {
     console.log("Initialisation de l'application...");
 
-    // 1. Mise à jour des références DOM
     elements.form = document.getElementById("guess-form");
     elements.input = document.getElementById("word-input");
     elements.history = document.getElementById("history");
@@ -65,7 +64,6 @@ export function initApp() {
     elements.roomInfo = document.getElementById("display-room-id");
     elements.messages = document.getElementById("messages");
 
-    // 2. Nettoyage de l'état
     state.currentRoomId = null;
     state.locked = false;
     
@@ -77,7 +75,6 @@ export function initApp() {
         roomBadge.style.cursor = "pointer";
         roomBadge.title = "Copier l'ID";
         
-        // Clonage pour nettoyer les anciens écouteurs
         const newBadge = roomBadge.cloneNode(true);
         roomBadge.parentNode.replaceChild(newBadge, roomBadge);
         
@@ -86,7 +83,6 @@ export function initApp() {
             const idText = idSpan ? idSpan.textContent : "";
             
             if (idText && idText !== "..." && idText !== "Déconnecté") {
-                // Utilisation de la fonction robuste
                 const success = await copyToClipboard(idText);
                 
                 if (success) {
@@ -97,7 +93,6 @@ export function initApp() {
                     newBadge.style.width = `${originalWidth}px`;
                     newBadge.style.textAlign = "center";
 
-                    // 2. Animation "Copié !"
                     newBadge.style.transition = "all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)";
                     newBadge.style.transform = "scale(1.1)";
                     newBadge.style.backgroundColor = "var(--success)";
@@ -231,15 +226,11 @@ export function initApp() {
 // Exposition globale pour le routeur
 window.initApp = initApp;
 
-// Premier lancement au chargement réel de la page
 document.addEventListener("DOMContentLoaded", initApp);
-
-export let currentConfigType = "definition";
 
 document.getElementById('btn-join').onclick = () => {
     if (!verifierPseudo()) return;
     
-    // CORRECTION : Même sécurisation que pour createGame
     const nameInput = document.getElementById('player-name');
     let name = nameInput ? nameInput.value : state.currentUser;
     if(!name && state.currentUser) name = state.currentUser;

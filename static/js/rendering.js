@@ -125,6 +125,5 @@ function getIcon(value) {
 }
 
 function getColor(value) {
-    // Plus utilisé avec le nouveau design CSS, mais gardé au cas où
     return `hsl(${value / 10}, 80%, 50%)`;
 }

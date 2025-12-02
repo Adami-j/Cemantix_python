@@ -91,8 +91,7 @@ export function initGameConnection(roomId, playerName) {
 
     const protocol = window.location.protocol === "https:" ? "wss" : "ws";
     const wsUrl = `${protocol}://${window.location.host}/rooms/${roomId}/ws?player_name=${encodeURIComponent(playerName)}`;
-    
-    // Fermeture propre de l'ancien socket s'il existe
+
     if (state.websocket) {
         state.websocket.close();
     }

@@ -33,32 +33,25 @@ export function showModal(title, contentHTML, isVictory = false) {
     const overlay = document.getElementById('modal-overlay');
     const titleEl = document.getElementById('modal-title');
     const contentEl = document.getElementById('modal-content');
-    const iconEl = document.getElementById('modal-icon'); // Peut être absent (null) sur le Hub
-    const actionsDiv = document.getElementById('modal-actions');
+    const iconEl = document.getElementById('modal-icon');
+    const actionsDiv = document.getElementById('modal-actions'); // On cible le conteneur
 
     if (!overlay) return;
 
-    // Mise à jour du texte
-    if (titleEl) titleEl.textContent = title;
-    if (contentEl) contentEl.innerHTML = contentHTML;
+    titleEl.textContent = title;
+    contentEl.innerHTML = contentHTML;
 
-    // --- CORRECTION DU BUG ICI ---
-    // On vérifie que iconEl existe avant de toucher à son style
-    if (iconEl) {
-        if (isVictory) {
-            iconEl.style.display = "block";
-            iconEl.textContent = "🏆";
-        } else {
-            iconEl.style.display = "none";
-        }
-    }
-    // -----------------------------
-
-    // Gestion des boutons par défaut (pour éviter qu'ils ne manquent si on ne personnalise pas)
-    if (!isVictory && actionsDiv) {
+    if (isVictory) {
+        iconEl.style.display = "block";
+        iconEl.textContent = "🏆";
+        // NOTE : On laisse main.js gérer les boutons spécifiques de victoire
+    } else {
+        iconEl.style.display = "none";
+        
+        // Pour une erreur standard, on remet proprement le bouton Fermer par défaut
+        // Cela "nettoie" les boutons Rejouer/Hub s'ils étaient là avant
         actionsDiv.innerHTML = `<button id="modal-close-btn" class="btn">Fermer</button>`;
-        const closeBtn = document.getElementById('modal-close-btn');
-        if (closeBtn) closeBtn.onclick = closeModal;
+        document.getElementById('modal-close-btn').onclick = closeModal;
     }
 
     overlay.classList.add('active');

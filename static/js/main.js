@@ -199,13 +199,12 @@ export function initApp() {
     if (window.location.pathname.includes("/game")) {
         const params = new URLSearchParams(window.location.search);
         const roomId = params.get("room");
-        const playerName = params.get("player");
+        let playerName = params.get("player");
 
         if (state.currentUser && playerName !== state.currentUser) {
             console.warn("Modification d'URL détectée : restauration du pseudo de session.");
-            
             playerName = state.currentUser;
-
+            
             const newUrl = new URL(window.location);
             newUrl.searchParams.set("player", playerName);
             window.history.replaceState(null, '', newUrl);

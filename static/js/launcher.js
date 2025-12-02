@@ -80,7 +80,7 @@ export function openGameConfig(type) {
                 <button id="btn-invite" class="btn" style="background: #a29bfe;">🤝 Inviter un ami</button>
                 <button id="btn-random" class="btn" style="background: #ff7675;">🎲 Adversaire Aléatoire</button>
             </div>
-            <button class="btn-close" style="margin-top:20px;">Annuler</button>
+            <button class="btn-close btn btn-outline" style="margin-top:20px;">Annuler</button>
         `;
 
         // Gestionnaire pour "Inviter un ami" (Créer une salle privée)

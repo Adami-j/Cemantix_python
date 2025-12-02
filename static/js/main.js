@@ -1261,6 +1261,39 @@ function injectBugButton() {
     document.body.appendChild(btn);
 }
 
+function openBugModal() {
+    const currentUser = localStorage.getItem("arcade_user_pseudo") || "Anonyme"; 
+    
+    const htmlContent = `
+        <div class="bug-form" style="text-align:left;">
+            <p style="margin-bottom:10px;">Oups ! Quelque chose ne va pas ? Décrivez le problème :</p>
+            <textarea id="bug-desc" placeholder="Ex: Le jeu plante quand je clique sur..."></textarea>
+            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">
+                Signalé par : <strong>${currentUser}</strong>
+            </p>
+        </div>
+    `;
+
+    showModal("SIGNALER UN BUG", htmlContent);
+    
+    // Remplacement des boutons de la modale
+    const actionsDiv = document.getElementById('modal-actions');
+    if (actionsDiv) {
+        actionsDiv.innerHTML = `
+            <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
+                <button class="btn btn-danger" onclick="sendBugReport('${currentUser}')">Envoyer</button>
+                <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
+            </div>
+        `;
+    }
+    
+    // Focus automatique sur la zone de texte
+    setTimeout(() => {
+        const txt = document.getElementById('bug-desc');
+        if(txt) txt.focus();
+    }, 100);
+}
+
 window.sendBugReport = async function(player) {
     const descInput = document.getElementById('bug-desc');
     const description = descInput.value.trim();
@@ -1312,47 +1345,6 @@ window.sendBugReport = async function(player) {
         if(window.closeModal) window.closeModal();
     }
 };
-
-function openBugModal() {
-    // 1. On récupère le pseudo (comme avant)
-    const currentUser = localStorage.getItem("arcade_user_pseudo") || "Anonyme"; 
-    
-    const htmlContent = `
-        <div class="bug-form" style="text-align:left;">
-            <p style="margin-bottom:10px;">Oups ! Quelque chose ne va pas ? Décrivez le problème :</p>
-            <textarea id="bug-desc" placeholder="Ex: Le jeu plante quand je clique sur..."></textarea>
-            <p style="font-size:0.8rem; color:var(--text-muted); margin-top:5px;">
-                Signalé par : <strong>${currentUser}</strong>
-            </p>
-        </div>
-    `;
-
-    showModal("SIGNALER UN BUG", htmlContent);
-    
-    // 2. Remplacement des boutons
-    const actionsDiv = document.getElementById('modal-actions');
-    if (actionsDiv) {
-        actionsDiv.innerHTML = `
-            <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
-                <button id="btn-submit-bug" class="btn btn-danger">Envoyer</button>
-                <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
-            </div>
-        `;
-
-        const submitBtn = document.getElementById('btn-submit-bug');
-        if (submitBtn) {
-            submitBtn.onclick = function() {
-                sendBugReport(currentUser);
-            };
-        }
-    }
-    
-    // Focus automatique
-    setTimeout(() => {
-        const txt = document.getElementById('bug-desc');
-        if(txt) txt.focus();
-    }, 100);
-}
 
 // Injection au chargement
 document.addEventListener("DOMContentLoaded", () => {

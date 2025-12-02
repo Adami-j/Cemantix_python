@@ -1,6 +1,7 @@
 import { createGame } from "./api.js";
 import { verifierPseudo } from "./session.js";
 import { closeConfigModal } from "./modal.js";
+import { state } from "./state.js";
 
 // Variable locale pour stocker le type en cours
 let currentConfigType = "definition";

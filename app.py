@@ -10,6 +10,9 @@ import time
 from datetime import date, datetime
 import httpx
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configurez l'URL du webhook Discord ici ou via une variable d'environnement
 DISCORD_WEBHOOK_URL = os.environ.get("DISCORD_WEBHOOK_URL", None)

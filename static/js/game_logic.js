@@ -141,8 +141,20 @@ export function initGameUI(data) {
         const box = document.getElementById("game-instruction");
         if(box) {
             box.style.display = "block";
-            document.getElementById("definition-text").innerHTML = `Thème : <strong style="color:var(--accent); text-transform:uppercase;">${data.public_state.theme}</strong>`;
-            document.getElementById("hint-text").textContent = "Trouvez le mot le plus proche !";
+            if (data.end_time === 0) {
+                document.getElementById("definition-text").innerHTML = `⏳ <span style="font-size:0.8em">En attente de l'adversaire...</span>`;
+                document.getElementById("hint-text").textContent = "Le thème est masqué.";
+                
+                const form = document.getElementById("guess-form");
+                if(form) form.style.display = "none";
+
+            } else {
+                document.getElementById("definition-text").innerHTML = `Thème : <strong style="color:var(--accent); text-transform:uppercase;">${data.public_state.theme}</strong>`;
+                document.getElementById("hint-text").textContent = "Trouvez le mot le plus proche !";
+                
+                const form = document.getElementById("guess-form");
+                if(form) form.style.display = "flex";
+            }
         }
                 const form = document.getElementById("guess-form");
         if(form) form.style.display = "flex";

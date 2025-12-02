@@ -34,21 +34,41 @@ export async function submitGameConfig() {
 }
 
 async function joinRandomDuel() {
-    const pseudo = localStorage.getItem("player_name");
+    // Utilisation de la variable d'état fiable pour le pseudo
+    const pseudo = state.currentUser; 
+    
+    if (!pseudo) {
+        alert("Vous devez être connecté.");
+        return;
+    }
+
     try {
+        const btn = document.getElementById('btn-random');
+        if(btn) {
+            btn.disabled = true;
+            btn.textContent = "Recherche...";
+        }
+
         const response = await fetch("/rooms/join_random", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ player_name: pseudo })
         });
         const data = await response.json();
+        
         if (data.room_id) {
-            window.location.hash = `#room=${data.room_id}`;
             closeConfigModal();
+            // CORRECTION : Redirection complète vers l'URL de jeu
+            window.location.href = `/game?room=${data.room_id}&player=${encodeURIComponent(pseudo)}`;
         }
     } catch (e) {
         console.error(e);
         alert("Erreur lors de la recherche d'adversaire.");
+        const btn = document.getElementById('btn-random');
+        if(btn) {
+            btn.disabled = false;
+            btn.textContent = "🎲 Adversaire Aléatoire";
+        }
     }
 }
 

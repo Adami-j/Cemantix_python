@@ -387,6 +387,7 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
         return
 
     await connections.connect(room_id, websocket)
+    room.active_players.add(player_name)
     room.add_player(player_name)
     
     # Récupération de l'état initial spécifique au jeu (ex: définition)
@@ -454,6 +455,8 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
 
     except WebSocketDisconnect:
         connections.disconnect(room_id, websocket)
+        room.active_players.discard(player_name)
 
     except Exception:
         connections.disconnect(room_id, websocket)
+        room.active_players.discard(player_name)

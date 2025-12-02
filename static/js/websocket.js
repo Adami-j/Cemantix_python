@@ -2,11 +2,10 @@ import { state } from "./state.js";
 import { addEntry, renderHistory, renderScoreboard, triggerConfetti, updateRoomStatus } from "./rendering.js";
 import { addHistoryMessage, setRoomInfo, showModal } from "./ui.js";
 import { addChatMessage } from "./chat_ui.js";
-import { elements } from "./dom.js";
-import { updateSessionUI, verifierPseudo } from "./session.js";
-import { currentUser } from "./session.js";
-import { copyToClipboard } from "./utils.js";
-import { checkDailyVictory } from "./victory.js";
+import { initGameUI, performGameReset, updateHangmanUI, startTimer, updateMusicContext, handleDefeat, handleBlitzSuccess, updateResetStatus } from "./game_logic.js";
+import { currentUser } from "./state.js";
+import { showModal } from "./ui.js";
+import { handleVictory } from "./victory.js";
 
 export function openWebsocket(playerName) {
     if (!state.currentRoomId) return;

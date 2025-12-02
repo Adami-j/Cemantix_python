@@ -227,18 +227,22 @@ export function initApp() {
 window.initApp = initApp;
 
 document.addEventListener("DOMContentLoaded", initApp);
+const btnJoin = document.getElementById('btn-join');
 
-document.getElementById('btn-join').onclick = () => {
-    if (!verifierPseudo()) return;
-    
-    const nameInput = document.getElementById('player-name');
-    let name = nameInput ? nameInput.value : state.currentUser;
-    if(!name && state.currentUser) name = state.currentUser;
+if (btnJoin) {
+    btnJoin.onclick = () => {
+        if (!verifierPseudo()) return;
+        
+        const nameInput = document.getElementById('player-name');
+        let name = nameInput ? nameInput.value : state.currentUser;
+        if(!name && state.currentUser) name = state.currentUser;
 
-    const room = document.getElementById('room-id').value;
-    if(!name || !room) return showModal("Données Manquantes", "Pseudo et ID requis.");
-    window.location.href = `/game?room=${room}&player=${encodeURIComponent(name)}`;
-};
+        const room = document.getElementById('room-id').value;
+        if(!name || !room) return showModal("Données Manquantes", "Pseudo et ID requis.");
+        
+        window.location.href = `/game?room=${room}&player=${encodeURIComponent(name)}`;
+    };
+}
 
 
 window.createGame = createGame;

@@ -53,6 +53,7 @@ export function addChatMessage(player, content) {
 }
 
 const chatForm = document.getElementById("chat-form");
+
 if (chatForm) {
     chatForm.addEventListener("submit", function(e) {
         e.preventDefault(); 

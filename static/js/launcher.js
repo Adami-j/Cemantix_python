@@ -34,7 +34,6 @@ export async function submitGameConfig() {
 }
 
 async function joinRandomDuel() {
-    // Utilisation de la variable d'état fiable pour le pseudo
     const pseudo = state.currentUser; 
     
     if (!pseudo) {
@@ -42,13 +41,13 @@ async function joinRandomDuel() {
         return;
     }
 
-    try {
-        const btn = document.getElementById('btn-random');
-        if(btn) {
-            btn.disabled = true;
-            btn.textContent = "Recherche...";
-        }
+    const btn = document.getElementById('btn-random');
+    if(btn) {
+        btn.disabled = true;
+        btn.textContent = "Recherche...";
+    }
 
+    try {
         const response = await fetch("/rooms/join_random", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -58,7 +57,6 @@ async function joinRandomDuel() {
         
         if (data.room_id) {
             closeConfigModal();
-            // CORRECTION : Redirection complète vers l'URL de jeu
             window.location.href = `/game?room=${data.room_id}&player=${encodeURIComponent(pseudo)}`;
         }
     } catch (e) {
@@ -87,6 +85,15 @@ export function openGameConfig(type) {
     if(modal) modal.classList.add('active');
 
     if (type === 'duel') {
+
+        const existingDuelMenu = document.getElementById('duel-menu-container');
+        if(existingDuelMenu) existingDuelMenu.remove();
+
+        // On masque les éléments standards
+        [modeGroup, durationGroup, desc].forEach(el => { if(el) el.style.display = 'none'; });
+        
+        if(title) title.textContent = "⚔️ Duel de Concepts";
+
         const originalContent = contentDiv.innerHTML;
         
         contentDiv.innerHTML = `
@@ -105,36 +112,34 @@ export function openGameConfig(type) {
             </div>
         `;
 
+        title.insertAdjacentElement('afterend', duelMenu);
+
         const inviteBtn = contentDiv.querySelector('#btn-invite');
         if (inviteBtn) {
             inviteBtn.onclick = () => {
                 closeConfigModal();
-                setTimeout(() => contentDiv.innerHTML = originalContent, 500);
-                createGame('duel', 'blitz', 60);
+                setTimeout(() => createGame('duel', 'blitz', 60), 100);
             };
         }
-        // Gestionnaire pour "Aléatoire"
-        const randomBtn = contentDiv.querySelector('#btn-random');
-        if (randomBtn) {
-            randomBtn.onclick = () => {
-                if (typeof joinRandomDuel === 'function') {
-                    joinRandomDuel();
-                } else {
-                    console.error("joinRandomDuel n'est pas défini");
-                }
-                setTimeout(() => contentDiv.innerHTML = originalContent, 500);
-            };
-        }
+
+        document.getElementById('btn-random').onclick = () => {
+            joinRandomDuel();
+        };
 
         const closeBtn = contentDiv.querySelector('.btn-close');
         if (closeBtn) {
             closeBtn.onclick = () => {
                 closeConfigModal();
-                setTimeout(() => contentDiv.innerHTML = originalContent, 500);
+                setTimeout(() => contentDiv.innerHTML = originalContent, 100);
             };
         }
         return;
-    } else if (type === 'intruder') {
+    } 
+
+    const duelMenu = document.getElementById('duel-menu-container');
+    if(duelMenu) duelMenu.remove();
+    
+    if (type === 'intruder') {
         if(title) title.textContent = "L'Intrus : Contre la montre";
         if(modeGroup) modeGroup.style.display = 'none'; 
         if(modeSelect) modeSelect.value = 'blitz';

@@ -136,11 +136,14 @@ export function initGameConnection(roomId, playerName) {
                 break;
 
             case "game_start":
-                // Le serveur nous dit que ça commence !
                 addHistoryMessage("🔔 " + data.message);
                 if (data.end_time) {
-                    // On importe startTimer depuis game_logic.js
                     import("./game_logic.js").then(mod => mod.startTimer(data.end_time));
+                    initGameUI({
+                        game_type: state.gameType,
+                        public_state: state.public_state,
+                        end_time: data.end_time 
+                    });
                 }
                 break;
 

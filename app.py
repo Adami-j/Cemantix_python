@@ -531,6 +531,11 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
     except WebSocketDisconnect:
         connections.disconnect(room_id, websocket)
         room.active_players.discard(player_name)
+        global waiting_duel_room_id
+        # Si la room était en attente et qu'elle se vide, on la retire de la file
+        if waiting_duel_room_id == room_id and len(room.active_players) == 0:
+            print(f"[DUEL] Room d'attente {room_id} abandonnée par le créateur.")
+            waiting_duel_room_id = None
 
     except Exception:
         connections.disconnect(room_id, websocket)

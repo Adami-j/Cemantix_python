@@ -98,6 +98,11 @@ export function startTimer(endTime) {
 
 export function initGameUI(data) {
     state.gameType = data.game_type;
+
+    if (data.public_state) {
+        state.public_state = data.public_state;
+    }
+
     const titles = { "cemantix": "Cémantix", "definition": "Dictionnario", "intruder": "L'Intrus", "hangman": "Pendu", "duel": "Duel de Concepts" };
     const titleEl = document.getElementById("game-title");
     if (titleEl) titleEl.textContent = titles[data.game_type] || "Jeu";
@@ -142,18 +147,25 @@ export function initGameUI(data) {
         if(box) {
             box.style.display = "block";
             if (data.end_time === 0) {
-                document.getElementById("definition-text").innerHTML = `⏳ <span style="font-size:0.8em">En attente de l'adversaire...</span>`;
-                document.getElementById("hint-text").textContent = "Le thème est masqué.";
-                
-                const form = document.getElementById("guess-form");
+                document.getElementById("definition-text").innerHTML = `
+                    <div style="animation: pulse 1.5s infinite;">⏳ Recherche d'adversaire...</div>
+                `;
+                document.getElementById("hint-text").innerHTML = `
+                    <button class="btn btn-danger" onclick="window.location.href='/'" style="margin-top:20px; padding: 10px 20px; font-size: 1rem;">
+                        Annuler la recherche
+                    </button>
+                `;
                 if(form) form.style.display = "none";
 
             } else {
-                document.getElementById("definition-text").innerHTML = `Thème : <strong style="color:var(--accent); text-transform:uppercase;">${data.public_state.theme}</strong>`;
+                document.getElementById("definition-text").innerHTML = `Thème : <strong style="color:var(--accent); text-transform:uppercase; font-size: 2.5rem;">${data.public_state.theme}</strong>`;
                 document.getElementById("hint-text").textContent = "Trouvez le mot le plus proche !";
                 
-                const form = document.getElementById("guess-form");
-                if(form) form.style.display = "flex";
+                if(form) {
+                    form.style.display = "flex";
+                    const input = form.querySelector('input');
+                    if(input) input.focus();
+                }
             }
         }
                 const form = document.getElementById("guess-form");

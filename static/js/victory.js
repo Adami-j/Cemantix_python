@@ -33,7 +33,7 @@ export function checkDailyVictory() {
     }
 }
 
-function handleVictory(winnerName, scoreboardData) {
+export function handleVictory(winnerName, scoreboardData) {
     if (state.locked) return;
     state.locked = true;
     triggerConfetti();

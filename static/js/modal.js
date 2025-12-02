@@ -1,6 +1,5 @@
 import { currentUser } from "./main";
 import { showModal, closeModal } from "./ui.js";
-
 import { STORAGE_KEY } from "./main.js";
 
 window.openLoginModal = function() {

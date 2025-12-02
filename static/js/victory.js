@@ -1,6 +1,9 @@
 import { createGame, currentUser } from "./main.js";
 import { elements } from "./dom.js";
 import { state } from "./state.js";
+import { triggerConfetti } from "./rendering.js";
+import { showModal } from "./ui.js";
+import { sendResetRequest } from "./game_logic.js";
 const DAILY_WIN_KEY = "arcade_daily_win";
 
 export function checkDailyVictory() {

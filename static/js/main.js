@@ -1262,6 +1262,7 @@ function injectBugButton() {
 }
 
 function openBugModal() {
+    // 1. On récupère le pseudo (comme avant)
     const currentUser = localStorage.getItem("arcade_user_pseudo") || "Anonyme"; 
     
     const htmlContent = `
@@ -1276,18 +1277,27 @@ function openBugModal() {
 
     showModal("SIGNALER UN BUG", htmlContent);
     
-    // Remplacement des boutons de la modale
+    // 2. Remplacement des boutons
     const actionsDiv = document.getElementById('modal-actions');
     if (actionsDiv) {
+        // NOTE : On a retiré onclick="sendBugReport..." et ajouté id="btn-submit-bug"
         actionsDiv.innerHTML = `
             <div style="display: flex; gap: 10px; justify-content: center; width: 100%;">
-                <button class="btn btn-danger" onclick="sendBugReport('${currentUser}')">Envoyer</button>
+                <button id="btn-submit-bug" class="btn btn-danger">Envoyer</button>
                 <button class="btn btn-outline" onclick="closeModal()">Annuler</button>
             </div>
         `;
+
+        // 3. FIX CRITIQUE : On attache l'événement ici, en JavaScript
+        const submitBtn = document.getElementById('btn-submit-bug');
+        if (submitBtn) {
+            submitBtn.onclick = function() {
+                sendBugReport(currentUser);
+            };
+        }
     }
     
-    // Focus automatique sur la zone de texte
+    // Focus automatique
     setTimeout(() => {
         const txt = document.getElementById('bug-desc');
         if(txt) txt.focus();

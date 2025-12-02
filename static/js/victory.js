@@ -24,14 +24,9 @@ export function checkDailyVictory() {
     const userWinKey = `daily_win_${state.currentUser}_${today}`;
 
     if (localStorage.getItem(userWinKey)) {
-        dailyBtn.textContent = "Défi du jour accompli ✅";
-        dailyBtn.classList.add("btn-disabled"); // Grise le bouton
         dailyBtn.disabled = true;
-        dailyBtn.onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            return false;
-        };
+        dailyBtn.textContent = "Défi du jour accompli ✅";
+        //dailyBtn.classList.add("btn-disabled"); // Grise le bouton
     }
 }
 

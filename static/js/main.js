@@ -201,6 +201,16 @@ export function initApp() {
         const roomId = params.get("room");
         const playerName = params.get("player");
 
+        if (state.currentUser && playerName !== state.currentUser) {
+            console.warn("Modification d'URL détectée : restauration du pseudo de session.");
+            
+            playerName = state.currentUser;
+
+            const newUrl = new URL(window.location);
+            newUrl.searchParams.set("player", playerName);
+            window.history.replaceState(null, '', newUrl);
+        }
+
         if (!roomId || !playerName) {
             window.location.href = "/";
         } else {

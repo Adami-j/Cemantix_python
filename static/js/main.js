@@ -6,7 +6,7 @@ import { initChat, addChatMessage } from "./chat_ui.js";
 import { verifierPseudo, logout, updateSessionUI, saveSessionPseudo } from "./session.js";
 import { copyToClipboard } from "./utils.js";
 import { initGameUI, handleDefeat, handleBlitzSuccess, updateHangmanUI, performGameReset, updateResetStatus, startTimer, sendResetRequest, requestSurrender } from "./game_logic.js";
-import { openGameConfig, openDictioConfig, submitGameConfig, toggleDurationDisplay, launchDictio } from "./launcher.js";
+import { openGameConfig, openDictioConfig, submitGameConfig, toggleDurationDisplay } from "./launcher.js";
 import { checkDailyVictory, handleVictory } from "./victory.js";
 import { openWebsocket, initGameConnection } from "./websocket.js";
 import { createGame } from "./api.js";

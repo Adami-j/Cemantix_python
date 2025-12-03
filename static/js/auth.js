@@ -3,15 +3,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const authModal = document.getElementById('auth-modal');
     const btnProfile = document.getElementById('btn-profile');
     
-    // Modales de confirmation / succès
     const logoutModal = document.getElementById('logout-modal');
     const successModal = document.getElementById('success-modal');
     
-    // Boutons de la modale déconnexion
     const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
     const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
 
-    // --- 2. Vérification de la session au chargement ---
     const token = localStorage.getItem('access_token');
     const username = localStorage.getItem('arcade_user_pseudo'); 
     
@@ -47,7 +44,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- 5. Soumission des formulaires ---
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
@@ -144,7 +140,7 @@ async function performAuth(endpoint, data, errorId) {
         document.getElementById('auth-modal').classList.remove('active');
         
         // 2. Afficher la modale de succès
-        const msg = endpoint.includes('register') ? "Compte créé avec succès !" : "Connexion réussie !";
+        const msg = endpoint.includes('register') ? "Compte créé avec succès !" : "Connexion réussie !auth";
         showSuccessModal(msg);
 
     } catch (err) {

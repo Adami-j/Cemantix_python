@@ -646,14 +646,26 @@ async def websocket_endpoint(websocket: WebSocket, room_id: str):
                     )
 
     except WebSocketDisconnect:
-        connections.disconnect(room_id, websocket)
-        room.active_players.discard(player_name)
-        global waiting_duel_room_id
-        # Si la room était en attente et qu'elle se vide, on la retire de la file
-        if waiting_duel_room_id == room_id and len(room.active_players) == 0:
-            print(f"[DUEL] Room d'attente {room_id} abandonnée par le créateur.")
-            waiting_duel_room_id = None
+        print(f"[WS] Déconnexion de {player_name} (Room: {room_id})")
+        if room.host_name == player_name:
+            print(f"[WS] L'hôte {player_name} a quitté. Destruction de la room {room_id}.")
+            await connections.broadcast(room_id, {
+                "type": "room_destroyed",
+                "message": "L'hôte a quitté la partie. La room est fermée."
+            })
+            if room_id in room_manager.rooms:
+                del room_manager.rooms[room_id]
+
+            connections.disconnect(room_id, websocket) 
+        else:
+            connections.disconnect(room_id, websocket)
+            room.active_players.discard(player_name)
+            global waiting_duel_room_id
+            if waiting_duel_room_id == room_id and len(room.active_players) == 0:
+                print(f"[DUEL] Room d'attente {room_id} abandonnée.")
+                waiting_duel_room_id = None
 
     except Exception:
+        print(f"Erreur WS: {e}")
         connections.disconnect(room_id, websocket)
         room.active_players.discard(player_name)

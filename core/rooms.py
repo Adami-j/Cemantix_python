@@ -77,6 +77,7 @@ class RoomState:
     locked: bool = False
     players: Dict[str, PlayerStats] = field(default_factory=dict)
     history: List[GuessEntry] = field(default_factory=list)
+    host_name: str = ""
     surrender_votes: Set[str] = field(default_factory=set)
     surrender_cooldown: float = 0.0
     surrender_active: bool = False
@@ -189,7 +190,8 @@ class RoomManager:
             room_id=room_id, 
             game_type=game_type, 
             engine=engine, 
-            mode=mode
+            mode=mode,
+            host_name=creator_name
         )
         room.add_player(creator_name)
         self.rooms[room_id] = room

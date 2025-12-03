@@ -71,6 +71,12 @@ export function openWebsocket(playerName) {
             case "chat_message":
                 addChatMessage(data.player_name, data.content);
                 break;
+            case "room_destroyed":
+                state.websocket.close();
+                state.currentRoomId = null;
+                alert("⚠️ " + data.message);
+                window.location.href = "/"; 
+                break;
             default:
                 break;
         }

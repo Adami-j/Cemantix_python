@@ -1,5 +1,3 @@
-// static/js/auth.js
-
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('auth-modal');
     const btnProfile = document.getElementById('btn-profile');
@@ -15,15 +13,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Gestion du clic sur le bouton Profil
     if (btnProfile) {
         btnProfile.addEventListener('click', (e) => {
-            e.preventDefault(); // Empêche tout comportement par défaut
+            e.preventDefault();
             
             if (localStorage.getItem('access_token')) {
-                // Déjà connecté : On propose la déconnexion
                 if (confirm("Voulez-vous vous déconnecter ?")) {
                     logout();
                 }
             } else {
-                // Pas connecté : On ouvre la modale
                 modal.classList.add('active');
             }
         });
@@ -104,7 +100,8 @@ async function performAuth(endpoint, data, errorId) {
         document.getElementById('auth-modal').classList.remove('active');
         
         // Optionnel : Notification de succès
-        alert(endpoint.includes('register') ? "Compte créé et connecté !" : "Connexion réussie !");
+        const msg = endpoint.includes('register') ? "Compte créé avec succès !" : "Connexion réussie !";
+        showSuccessModal(msg);
 
     } catch (err) {
         errorElem.textContent = err.message;
@@ -115,6 +112,22 @@ async function performAuth(endpoint, data, errorId) {
     }
 }
 
+function showSuccessModal(message) {
+    const modal = document.getElementById('success-modal');
+    const msgElement = document.getElementById('success-message');
+    
+    if (modal && msgElement) {
+        msgElement.textContent = message;
+        modal.classList.add('active');
+        
+        setTimeout(() => {
+            modal.classList.remove('active');
+        }, 2000);
+    } else {
+        alert(message);
+    }
+}
+
 function updateProfileUI(username) {
     const display = document.getElementById('profile-name-display');
     const btn = document.getElementById('btn-profile');
@@ -122,7 +135,6 @@ function updateProfileUI(username) {
     if (display) display.textContent = username;
     if (btn) {
         btn.classList.add('logged-in');
-        // On change l'icône pour montrer qu'on est connecté
         const avatar = btn.querySelector('.avatar');
         if(avatar) avatar.textContent = "😎";
     }
@@ -130,6 +142,100 @@ function updateProfileUI(username) {
 
 function logout() {
     localStorage.removeItem('access_token');
-    localStorage.removeItem('arcade_user_pseudo'); // On garde le pseudo "invité" si on veut, ou on le supprime
-    location.reload(); // On recharge pour remettre l'état à zéro
+    localStorage.removeItem('arcade_user_pseudo');
+    location.reload();
+}
+
+function showSuccessModal(message) {
+    const modal = document.getElementById('success-modal');
+    const msgElement = document.getElementById('success-message');
+    
+    if (modal && msgElement) {
+        msgElement.textContent = message;
+        modal.classList.add('active');
+        
+        // Fermeture automatique après 2 secondes
+        setTimeout(() => {
+            modal.classList.remove('active');
+        }, 2000);
+    }
+}
+
+async function loginUser(username, password) {
+    try {
+        const formData = new URLSearchParams();
+        formData.append("username", username);
+        formData.append("password", password);
+
+        const response = await fetch("/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            // Sauvegarder le token
+            localStorage.setItem("access_token", data.access_token);
+            localStorage.setItem("username", username); // On garde le pseudo pour l'affichage
+            
+            // Fermer la modale de connexion
+            const authModal = document.getElementById('auth-modal');
+            if (authModal) authModal.classList.remove('active');
+
+            // AFFICHER LA NOUVELLE MODALE DE SUCCÈS
+            showSuccessModal("Connexion réussie !");
+
+            // Mettre à jour l'interface
+            updateAuthUI();
+        } else {
+            // Idéalement, faire une modale d'erreur aussi ici
+            alert("Erreur: " + (data.detail || "Identifiants incorrects"));
+        }
+    } catch (error) {
+        console.error("Erreur login:", error);
+        alert("Erreur de connexion au serveur.");
+    }
+}
+
+export function setupAuthListeners() {
+    // ... (votre code pour switchTab, loginForm submit, etc.) ...
+
+    // Gestionnaire pour le bouton "Se déconnecter" du menu
+    const logoutBtn = document.getElementById('logout-btn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            // OUVRIR LA MODALE DE CONFIRMATION AU LIEU DE CONFIRM()
+            const logoutModal = document.getElementById('logout-modal');
+            if (logoutModal) logoutModal.classList.add('active');
+        });
+    }
+
+    // Gestionnaires pour la modale de déconnexion (Oui / Non)
+    const confirmLogout = document.getElementById('confirm-logout-btn');
+    const cancelLogout = document.getElementById('cancel-logout-btn');
+    const logoutModal = document.getElementById('logout-modal');
+
+    if (confirmLogout) {
+        confirmLogout.addEventListener('click', () => {
+            // Action réelle de déconnexion
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("username");
+            updateAuthUI();
+            
+            // Fermer la modale
+            if (logoutModal) logoutModal.classList.remove('active');
+            
+            showSuccessModal("Vous êtes déconnecté.");
+        });
+    }
+
+    if (cancelLogout) {
+        cancelLogout.addEventListener('click', () => {
+            // Juste fermer la modale
+            if (logoutModal) logoutModal.classList.remove('active');
+        });
+    }
 }

@@ -1,5 +1,6 @@
 import { setCurrentUser, logout as sessionLogout } from "./session.js";
 import { state } from "./state.js";
+import { showModal } from "./ui.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- 1. Récupération des éléments DOM ---
@@ -23,6 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnProfile) {
         btnProfile.addEventListener('click', (e) => {
             e.preventDefault();
+
+            if (state.currentRoomId) {
+                showModal("Action Impossible", "Vous ne pouvez pas changer de compte ou vous déconnecter pendant une partie.<br><br>Retournez au Hub pour quitter proprement.");
+                return;
+            }
             
             if (state.currentUser) {
                 if (logoutModal) logoutModal.classList.add('active');
@@ -42,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (cancelLogoutBtn) {
         cancelLogoutBtn.addEventListener('click', () => {
-            // Annulation : on ferme juste la modale
             if (logoutModal) logoutModal.classList.remove('active');
         });
     }

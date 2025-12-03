@@ -9,10 +9,22 @@
 <body>
 
 <div class="user-controls">
-    <button id="btn-profile" class="profile-btn" onclick="openLoginModal()">
+    <button id="btn-profile" class="profile-btn">
         <div class="avatar">👤</div>
         <span id="profile-name-display">Connexion</span>
     </button>
+</div>
+
+<div id="logout-modal" class="modal-overlay">
+    <div class="modal-box" style="max-width: 400px;">
+        <h2 style="margin-bottom: 20px;">Déconnexion</h2>
+        <p style="color: var(--text-muted); margin-bottom: 30px;">Voulez-vous vraiment vous déconnecter ?</p>
+        
+        <div style="display: flex; gap: 10px; justify-content: center;">
+            <button id="confirm-logout-btn" class="btn btn-danger">Se déconnecter</button>
+            <button id="cancel-logout-btn" class="btn btn-outline">Annuler</button>
+        </div>
+    </div>
 </div>
 
 <div class="container">

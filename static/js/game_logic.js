@@ -397,3 +397,102 @@ export function performGameReset(data) {
     
     addHistoryMessage("🔄 Nouvelle partie commencée !");
 }
+
+export async function requestSurrender(vote = true) {
+    if (state.roomLocked) return;
+
+    try {
+        const res = await fetch(`/rooms/${state.currentRoomId}/surrender`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+                player_name: state.currentUser,
+                vote: vote 
+            })
+        });
+        
+        const data = await res.json();
+        if (res.status === 429) {
+            showModal("Patience...", data.message);
+        } else if (res.status === 403) {
+            showModal("Impossible", data.message);
+        }
+        
+
+        if (!vote) closeModal();
+
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+
+export function handleSurrenderVote(data) {
+
+    if (data.initiator === state.currentUser) {
+        addHistoryMessage(`⏳ Vote d'abandon lancé (${data.current_votes}/${data.total_players})...`);
+        return;
+    }
+
+    showModal("🏳️ Abandon proposé", `
+        <div style="text-align:center;">
+            <p><strong>${data.initiator}</strong> propose de révéler le mot.</p>
+            <p>Acceptez-vous la défaite ?</p>
+            <p style="font-size:0.9em; color:var(--text-muted); margin-top:10px;">L'unanimité est requise.</p>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:20px;">
+                <button class="btn" style="background:var(--accent);" onclick="window.confirmSurrender(true)">Oui, révéler</button>
+                <button class="btn btn-outline" onclick="window.confirmSurrender(false)">Non, continuer</button>
+            </div>
+        </div>
+    `);
+}
+
+
+window.confirmSurrender = function(decision) {
+    requestSurrender(decision);
+};
+
+
+export function handleSurrenderCancel(data) {
+    closeModal();
+    addHistoryMessage(`❌ ${data.message}`);
+    const btn = document.getElementById('btn-surrender');
+    if(btn) {
+        btn.style.opacity = "0.5";
+        btn.style.cursor = "not-allowed";
+        setTimeout(() => {
+            btn.style.opacity = "1";
+            btn.style.cursor = "pointer";
+        }, data.cooldown * 1000);
+    }
+}
+
+export function handleSurrenderSuccess(data) {
+    closeModal(); 
+    
+    const overlay = document.getElementById('modal-overlay');
+    if (!overlay) return;
+    let count = 3;
+
+    showModal("Révélation...", `<h1 id="surrender-countdown" style="font-size:6rem; color:var(--accent);">3</h1>`);
+    
+    const actions = document.getElementById('modal-actions');
+    if(actions) actions.style.display = 'none';
+
+    const interval = setInterval(() => {
+        count--;
+        const el = document.getElementById('surrender-countdown');
+        if (el) el.textContent = count > 0 ? count : "💥";
+
+        if (count <= 0) {
+            clearInterval(interval);
+            import("./game_logic.js").then(mod => {
+                if(actions) actions.style.display = 'block';
+                mod.handleDefeat({
+                    target_reveal: data.word,
+                    message: "Partie abandonnée."
+                });
+            });
+        }
+    }, 1000);
+}

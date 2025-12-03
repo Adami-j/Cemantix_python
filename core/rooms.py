@@ -77,6 +77,9 @@ class RoomState:
     locked: bool = False
     players: Dict[str, PlayerStats] = field(default_factory=dict)
     history: List[GuessEntry] = field(default_factory=list)
+    surrender_votes: Set[str] = field(default_factory=set)
+    surrender_cooldown: float = 0.0
+    surrender_active: bool = False
 
     end_time: float = 0.0
     team_score: int = 0

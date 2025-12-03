@@ -70,6 +70,18 @@ export function initApp() {
     updateSessionUI();
     checkDailyVictory();
 
+    const btnSurrender = document.getElementById("btn-surrender");
+    if (btnSurrender) {
+        btnSurrender.onclick = (e) => {
+            e.preventDefault();
+            if (state.currentMode === "daily") {
+                alert("On n'abandonne pas le challenge du jour !");
+                return;
+            }
+            requestSurrender(true);
+        };
+    }
+
     const roomBadge = document.getElementById("room-badge");
     if (roomBadge) {
         roomBadge.style.cursor = "pointer";

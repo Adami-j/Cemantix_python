@@ -84,6 +84,10 @@ class ResetRequest(BaseModel):
 class AdminLogRequest(BaseModel):
     password: str
 
+class SurrenderRequest(BaseModel):
+    player_name: str
+    vote: bool
+
 class RoomConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, List[WebSocket]] = {}
@@ -219,6 +223,60 @@ def process_guess(room: RoomState, word: str, player_name: str) -> Dict[str, Any
         "victory": victory and room.mode != "blitz", # Victoire standard seulement si pas blitz
     }
 
+@app.post("/rooms/{room_id}/surrender")
+async def surrender_room(room_id: str, payload: SurrenderRequest):
+    room = room_manager.get_room(room_id)
+    if not room:
+        return JSONResponse(status_code=404, content={"error": "room_not_found"})
+
+    if room.mode == "daily":
+        return JSONResponse(status_code=403, content={"message": "Impossible d'abandonner le défi quotidien !"})
+
+    current_time = time.time()
+    if room.surrender_cooldown > current_time:
+        remaining = int(room.surrender_cooldown - current_time)
+        return JSONResponse(status_code=429, content={"message": f"Attendez {remaining}s avant de redemander."})
+
+    if not payload.vote:
+
+        room.surrender_votes.clear()
+        room.surrender_active = False
+        room.surrender_cooldown = current_time + 30.0 
+        
+        await connections.broadcast(room_id, {
+            "type": "surrender_cancel",
+            "message": f"{payload.player_name} a refusé l'abandon.",
+            "cooldown": 30
+        })
+        return {"status": "cancelled"}
+
+    room.surrender_votes.add(payload.player_name)
+    room.surrender_active = True
+    
+    active_count = len(room.active_players) if room.active_players else 1
+    vote_count = len(room.surrender_votes)
+
+    if vote_count >= active_count:
+        target_word = getattr(room.engine, "target_word", "Inconnu")
+        room.locked = True
+        room.surrender_votes.clear()
+        room.surrender_active = False
+        
+        await connections.broadcast(room_id, {
+            "type": "surrender_success",
+            "word": target_word,
+            "player_name": payload.player_name
+        })
+        return {"status": "success"}
+
+    else:
+        await connections.broadcast(room_id, {
+            "type": "surrender_vote_start",
+            "initiator": payload.player_name,
+            "current_votes": vote_count,
+            "total_players": active_count
+        })
+        return {"status": "vote_pending"}
 
 @app.post("/rooms/join_random")
 def join_random_duel(payload: CreateRoomRequest):

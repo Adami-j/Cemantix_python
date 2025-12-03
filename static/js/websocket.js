@@ -185,6 +185,17 @@ export function initGameConnection(roomId, playerName) {
             case "reset_update":
                 updateResetStatus(data);
                 break;
+            case "surrender_vote_start":
+                handleSurrenderVote(data);
+                break;
+                
+            case "surrender_cancel":
+                handleSurrenderCancel(data);
+                break;
+                
+            case "surrender_success":
+                handleSurrenderSuccess(data);
+                break;
         }
 
         if (data.blitz_success) handleBlitzSuccess(data);

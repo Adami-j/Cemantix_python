@@ -25,10 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             
             if (localStorage.getItem('access_token')) {
-                // CAS DÉCONNEXION : On ouvre la modale de confirmation
                 if (logoutModal) logoutModal.classList.add('active');
             } else {
-                // CAS CONNEXION : On ouvre la modale d'auth
                 if (authModal) authModal.classList.add('active');
             }
         });
@@ -91,7 +89,6 @@ window.switchAuthTab = function(tab) {
     }
 };
 
-// Afficher la modale de succès (verte)
 function showSuccessModal(message) {
     const modal = document.getElementById('success-modal');
     const msgElement = document.getElementById('success-message');
@@ -100,12 +97,10 @@ function showSuccessModal(message) {
         msgElement.textContent = message;
         modal.classList.add('active');
         
-        // Fermeture automatique après 2 secondes
         setTimeout(() => {
             modal.classList.remove('active');
         }, 2000);
     } else {
-        // Fallback si la modale n'existe pas
         console.log("Succès:", message);
     }
 }

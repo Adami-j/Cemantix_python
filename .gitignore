@@ -6,3 +6,4 @@ __pycache__/*
 *.exe
 /android/node_modules
 /.env
+.env

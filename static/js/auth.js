@@ -1,3 +1,6 @@
+import { setCurrentUser, logout as sessionLogout } from "./session.js";
+import { state } from "./state.js";
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- 1. Récupération des éléments DOM ---
     const authModal = document.getElementById('auth-modal');
@@ -21,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         btnProfile.addEventListener('click', (e) => {
             e.preventDefault();
             
-            if (localStorage.getItem('access_token')) {
+            if (state.currentUser) {
                 if (logoutModal) logoutModal.classList.add('active');
             } else {
                 if (authModal) authModal.classList.add('active');
@@ -130,16 +133,14 @@ async function performAuth(endpoint, data, errorId) {
             throw new Error(result.detail || "Erreur inconnue");
         }
 
-        // --- SUCCÈS ---
         localStorage.setItem('access_token', result.access_token);
-        localStorage.setItem('arcade_user_pseudo', result.username);
-
-        updateProfileUI(result.username);
         
-        // 1. Fermer la modale d'auth
-        document.getElementById('auth-modal').classList.remove('active');
+        setCurrentUser(result.username); 
         
-        // 2. Afficher la modale de succès
+        // Fermer la modale d'auth
+        const authModal = document.getElementById('auth-modal');
+        if(authModal) authModal.classList.remove('active');
+        
         const msg = endpoint.includes('register') ? "Compte créé avec succès !" : "Connexion réussie !auth";
         showSuccessModal(msg);
 

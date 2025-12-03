@@ -1,68 +1,87 @@
+// static/js/auth.js
+
 document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('auth-modal');
-    const btnLogin = document.getElementById('edit-username'); // Le bouton en haut à droite
-    const btnClose = document.querySelector('.close-modal');
+    const btnProfile = document.getElementById('btn-profile');
     
-    // Vérifier si déjà connecté
-    checkAuthStatus();
+    // Vérification de la session au chargement
+    const token = localStorage.getItem('access_token');
+    const username = localStorage.getItem('arcade_user_pseudo'); // On utilise la même clé que main.js pour compatibilité
+    
+    if (token && username) {
+        updateProfileUI(username);
+    }
 
-    // Ouvrir la modale
-    if(btnLogin) {
-        btnLogin.addEventListener('click', () => {
-            modal.style.display = "block";
+    // Gestion du clic sur le bouton Profil
+    if (btnProfile) {
+        btnProfile.addEventListener('click', (e) => {
+            e.preventDefault(); // Empêche tout comportement par défaut
+            
+            if (localStorage.getItem('access_token')) {
+                // Déjà connecté : On propose la déconnexion
+                if (confirm("Voulez-vous vous déconnecter ?")) {
+                    logout();
+                }
+            } else {
+                // Pas connecté : On ouvre la modale
+                modal.classList.add('active');
+            }
         });
     }
 
-    // Fermer la modale
-    if(btnClose) {
-        btnClose.addEventListener('click', () => {
-            modal.style.display = "none";
+    // Gestion de la soumission Login
+    const loginForm = document.getElementById('login-form');
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            await performAuth('/auth/login', { username, password }, 'login-error');
         });
     }
 
-    // Gestion du formulaire Login
-    document.getElementById('login-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('login-username').value;
-        const password = document.getElementById('login-password').value;
-        
-        await performAuth('/auth/login', { username, password }, 'login-error');
-    });
-
-    // Gestion du formulaire Inscription
-    document.getElementById('register-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const username = document.getElementById('register-username').value;
-        const password = document.getElementById('register-password').value;
-        
-        await performAuth('/auth/register', { username, password }, 'register-error');
-    });
+    // Gestion de la soumission Inscription
+    const registerForm = document.getElementById('register-form');
+    if (registerForm) {
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            await performAuth('/auth/register', { username, password }, 'register-error');
+        });
+    }
 });
 
-// Fonction pour changer d'onglet
-function switchAuthTab(tab) {
+// Fonction exposée globalement pour les boutons de tab
+window.switchAuthTab = function(tab) {
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-    const tabs = document.querySelectorAll('.tab-btn');
+    const tabLogin = document.getElementById('tab-login');
+    const tabRegister = document.getElementById('tab-register');
 
     if (tab === 'login') {
         loginForm.style.display = 'block';
         registerForm.style.display = 'none';
-        tabs[0].classList.add('active');
-        tabs[1].classList.remove('active');
+        tabLogin.classList.add('active');
+        tabRegister.classList.remove('active');
     } else {
         loginForm.style.display = 'none';
         registerForm.style.display = 'block';
-        tabs[0].classList.remove('active');
-        tabs[1].classList.add('active');
+        tabLogin.classList.remove('active');
+        tabRegister.classList.add('active');
     }
-}
+};
 
-// Fonction générique d'appel API
 async function performAuth(endpoint, data, errorId) {
     const errorElem = document.getElementById(errorId);
     errorElem.textContent = "";
     
+    // Feedback visuel (bouton en chargement)
+    const btn = document.querySelector(endpoint.includes('login') ? '#login-form button' : '#register-form button');
+    const originalText = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = "Chargement...";
+
     try {
         const response = await fetch(endpoint, {
             method: 'POST',
@@ -76,35 +95,41 @@ async function performAuth(endpoint, data, errorId) {
             throw new Error(result.detail || "Erreur inconnue");
         }
 
-        // Succès : On stocke le token et le pseudo
+        // Succès : Stockage
         localStorage.setItem('access_token', result.access_token);
-        localStorage.setItem('username', result.username);
+        localStorage.setItem('arcade_user_pseudo', result.username);
 
-        // Mise à jour de l'interface
-        updateUI(result.username);
-        document.getElementById('auth-modal').style.display = "none";
+        // Mise à jour UI et fermeture
+        updateProfileUI(result.username);
+        document.getElementById('auth-modal').classList.remove('active');
         
-        // Optionnel : Recharger la page pour rafraîchir les connexions sockets avec le bon token
-        // location.reload(); 
+        // Optionnel : Notification de succès
+        alert(endpoint.includes('register') ? "Compte créé et connecté !" : "Connexion réussie !");
 
     } catch (err) {
         errorElem.textContent = err.message;
+        errorElem.style.color = "#ff6b6b";
+    } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
 }
 
-function checkAuthStatus() {
-    const token = localStorage.getItem('access_token');
-    const username = localStorage.getItem('username');
-    if (token && username) {
-        updateUI(username);
+function updateProfileUI(username) {
+    const display = document.getElementById('profile-name-display');
+    const btn = document.getElementById('btn-profile');
+    
+    if (display) display.textContent = username;
+    if (btn) {
+        btn.classList.add('logged-in');
+        // On change l'icône pour montrer qu'on est connecté
+        const avatar = btn.querySelector('.avatar');
+        if(avatar) avatar.textContent = "😎";
     }
 }
 
-function updateUI(username) {
-    const btn = document.getElementById('edit-username');
-    if(btn) {
-        // Change le texte du bouton et ajoute une option de déconnexion si tu veux
-        btn.innerHTML = `👤 ${username}`;
-        // Tu pourrais ajouter un bouton logout ici ou modifier le comportement du clic
-    }
+function logout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('arcade_user_pseudo'); // On garde le pseudo "invité" si on veut, ou on le supprime
+    location.reload(); // On recharge pour remettre l'état à zéro
 }

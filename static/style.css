@@ -1217,47 +1217,51 @@ input:disabled {
 }
 
 /* Auth Modal Styles */
-.auth-container {
-    max-width: 400px;
-    text-align: center;
-}
+/* --- STYLE AUTH MODAL --- */
 .auth-tabs {
     display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-    border-bottom: 1px solid #ddd;
+    justify-content: space-between;
+    margin-bottom: 25px;
+    border-bottom: 2px solid var(--border);
 }
+
 .tab-btn {
     background: none;
     border: none;
-    padding: 10px;
-    cursor: pointer;
+    padding: 10px 20px;
+    font-family: var(--font-heading);
     font-size: 1.1rem;
-    color: #666;
-}
-.tab-btn.active {
-    color: #4CAF50;
-    border-bottom: 3px solid #4CAF50;
-    font-weight: bold;
-}
-.auth-form input {
-    width: 100%;
-    padding: 10px;
-    margin: 10px 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-.error-msg {
-    color: red;
-    font-size: 0.9rem;
-    margin-top: 10px;
-}
-.info-text {
-    font-size: 0.8rem;
-    color: #888;
-    margin-bottom: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    transition: all 0.3s;
+    flex: 1;
 }
 
+.tab-btn:hover {
+    color: var(--text-main);
+    background-color: var(--surface-hover);
+}
+
+.tab-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 700;
+}
+
+.auth-form {
+    text-align: left;
+}
+
+.error-msg {
+    margin-top: 15px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.auth-box {
+    max-width: 400px; /* Plus étroit que les autres modales */
+}
 /* =========================================
    ADAPTATION MOBILE COMPLÈTE (Max 768px)
    ========================================= */

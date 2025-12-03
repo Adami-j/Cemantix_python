@@ -1,6 +1,6 @@
 import asyncio
 import uvicorn
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse
 from pydantic import BaseModel
 from starlette.responses import FileResponse
@@ -12,6 +12,11 @@ import httpx
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+from core.models import User
+from core.database import engine, Base, get_db
+from core.auth import get_password_hash, verify_password, create_access_token
+from sqlalchemy.future import select
+from pydantic import BaseModel
 
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)
@@ -87,6 +92,14 @@ class AdminLogRequest(BaseModel):
 class SurrenderRequest(BaseModel):
     player_name: str
     vote: bool
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
 
 class RoomConnectionManager:
     def __init__(self):
@@ -221,6 +234,12 @@ def process_guess(room: RoomState, word: str, player_name: str) -> Dict[str, Any
         "victory": victory and room.mode != "blitz",
     }
 
+
+@app.on_event("startup")
+async def init_db():
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
 print("Chargement de la route /surrender...")
 @app.post("/rooms/{room_id}/surrender")
 async def surrender_room(room_id: str, payload: SurrenderRequest):
@@ -276,6 +295,31 @@ async def surrender_room(room_id: str, payload: SurrenderRequest):
             "total_players": active_count
         })
         return {"status": "vote_pending"}
+    
+
+@app.post("/auth/register")
+async def register(user: UserCreate, db = Depends(get_db)):
+    # Vérifier si user existe déjà
+    result = await db.execute(select(User).where(User.username == user.username))
+    if result.scalars().first():
+        raise HTTPException(status_code=400, detail="Pseudo déjà pris")
+    
+    hashed_pw = get_password_hash(user.password)
+    new_user = User(username=user.username, hashed_password=hashed_pw)
+    db.add(new_user)
+    await db.commit()
+    return {"message": "Compte créé"}
+
+@app.post("/auth/login", response_model=Token)
+async def login(user: UserCreate, db = Depends(get_db)):
+    result = await db.execute(select(User).where(User.username == user.username))
+    db_user = result.scalars().first()
+    
+    if not db_user or not verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Identifiants incorrects")
+    
+    access_token = create_access_token(data={"sub": db_user.username})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @app.post("/rooms/join_random")
 def join_random_duel(payload: CreateRoomRequest):

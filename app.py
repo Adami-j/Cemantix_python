@@ -16,8 +16,14 @@ from dotenv import load_dotenv
 from core.models import User
 from core.database import engine, Base, get_db
 from core.auth import get_password_hash, verify_password, create_access_token
-from sqlalchemy.future import select
+from sqlalchemy import select
 from pydantic import BaseModel
+import sqlalchemy
+import asyncpg
+
+print(f"🔍 VERSION ASYNCPG CHARGÉE : {asyncpg.__version__}")
+print(f"📂 EMPLACEMENT ASYNCPG : {asyncpg.__file__}")
+print(f"🔍 VERSION SQLALCHEMY : {sqlalchemy.__version__}")
 
 env_path = Path(__file__).parent / ".env"
 load_dotenv(dotenv_path=env_path)

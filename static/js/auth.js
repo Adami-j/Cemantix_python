@@ -1,6 +1,8 @@
 import { setCurrentUser, logout as sessionLogout } from "./session.js";
 import { state } from "./state.js";
 import { showModal } from "./ui.js";
+// AJOUT : Import de la fonction qui gère le profil et les stats
+import { openLoginModal } from "./modal.js"; 
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- 1. Récupération des éléments DOM ---
@@ -8,8 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnProfile = document.getElementById('btn-profile');
     
     const logoutModal = document.getElementById('logout-modal');
-    const successModal = document.getElementById('success-modal');
-    
     const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
     const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
 
@@ -20,25 +20,18 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProfileUI(username);
     }
 
-
+    // --- MODIFICATION ICI : Délégation à openLoginModal ---
     if (btnProfile) {
         btnProfile.addEventListener('click', (e) => {
             e.preventDefault();
-
-            if (state.currentRoomId) {
-                showModal("Action Impossible", "Vous ne pouvez pas changer de compte ou vous déconnecter pendant une partie.<br><br>Retournez au Hub pour quitter proprement.");
-                return;
-            }
-            
-            if (state.currentUser) {
-                if (logoutModal) logoutModal.classList.add('active');
-            } else {
-                if (authModal) authModal.classList.add('active');
-            }
+            // On appelle la fonction centrale qui gère maintenant :
+            // 1. L'affichage des stats (si connecté)
+            // 2. L'authentification (si déconnecté)
+            openLoginModal();
         });
     }
 
-    // --- 4. Logique de la modale de déconnexion ---
+    // --- 4. Logique de la modale de déconnexion (Toujours utile si appelée via le bouton "Se déconnecter" des stats) ---
     if (confirmLogoutBtn) {
         confirmLogoutBtn.addEventListener('click', () => {
             logout(); // Action de déconnexion
@@ -95,29 +88,39 @@ window.switchAuthTab = function(tab) {
 
 function showSuccessModal(message) {
     const modal = document.getElementById('success-modal');
-    const msgElement = document.getElementById('success-message');
-    
-    if (modal && msgElement) {
-        msgElement.textContent = message;
-        modal.classList.add('active');
-        
-        setTimeout(() => {
-            modal.classList.remove('active');
-        }, 2000);
-    } else {
-        console.log("Succès:", message);
+    // Création dynamique de la modale si elle n'existe pas (fallback)
+    if (!modal) {
+        alert(message);
+        return;
     }
+    
+    // Si la modale existe mais n'a pas la structure attendue, on adapte
+    let msgElement = document.getElementById('success-message');
+    if (!msgElement && modal) {
+        modal.innerHTML = `<div class="modal-content" style="background:white; padding:20px; border-radius:10px; text-align:center;">
+            <h3 style="color:var(--success)">${message}</h3>
+        </div>`;
+    } else if (msgElement) {
+        msgElement.textContent = message;
+    }
+
+    modal.classList.add('active');
+    setTimeout(() => {
+        modal.classList.remove('active');
+    }, 2000);
 }
 
 // Exécuter l'appel API (Login ou Register)
 async function performAuth(endpoint, data, errorId) {
     const errorElem = document.getElementById(errorId);
-    errorElem.textContent = "";
+    if(errorElem) errorElem.textContent = "";
     
     const btn = document.querySelector(endpoint.includes('login') ? '#login-form button' : '#register-form button');
-    const originalText = btn.textContent;
-    btn.disabled = true;
-    btn.textContent = "Chargement...";
+    const originalText = btn ? btn.textContent : "...";
+    if(btn) {
+        btn.disabled = true;
+        btn.textContent = "Chargement...";
+    }
 
     try {
         const response = await fetch(endpoint, {
@@ -126,7 +129,6 @@ async function performAuth(endpoint, data, errorId) {
             body: JSON.stringify(data)
         });
 
-        // Gestion de l'erreur 503 ou HTML renvoyé par erreur
         const contentType = response.headers.get("content-type");
         if (!contentType || !contentType.includes("application/json")) {
             throw new Error("Le serveur est indisponible (Erreur 503). Vérifiez les logs Python.");
@@ -146,16 +148,22 @@ async function performAuth(endpoint, data, errorId) {
         const authModal = document.getElementById('auth-modal');
         if(authModal) authModal.classList.remove('active');
         
-        const msg = endpoint.includes('register') ? "Compte créé avec succès !" : "Connexion réussie !auth";
+        const msg = endpoint.includes('register') ? "Compte créé avec succès !" : "Connexion réussie !";
         showSuccessModal(msg);
 
     } catch (err) {
         console.error(err);
-        errorElem.textContent = err.message;
-        errorElem.style.color = "#ff6b6b";
+        if(errorElem) {
+            errorElem.textContent = err.message;
+            errorElem.style.color = "#ff6b6b";
+        } else {
+            alert(err.message);
+        }
     } finally {
-        btn.disabled = false;
-        btn.textContent = originalText;
+        if(btn) {
+            btn.disabled = false;
+            btn.textContent = originalText;
+        }
     }
 }
 
@@ -175,7 +183,6 @@ function logout() {
     localStorage.removeItem('access_token');
     localStorage.removeItem('arcade_user_pseudo');
     
-    // Mise à jour visuelle immédiate
     const display = document.getElementById('profile-name-display');
     const btn = document.getElementById('btn-profile');
     
@@ -188,5 +195,5 @@ function logout() {
 
     showSuccessModal("Vous êtes déconnecté.");
     
-    setTimeout(() => location.reload(), 0);
+    setTimeout(() => location.reload(), 500);
 }

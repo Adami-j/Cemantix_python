@@ -53,18 +53,28 @@ export function verifierPseudo() {
     return true;
 }
 
+// C'est cette fonction qui est appelée par le bouton "Se déconnecter"
 export function logout() {
+    // 1. Nettoyage complet
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem('access_token'); // Ajout pour supprimer le token de connexion
     state.currentUser = "";
+    
     updateSessionUI();
+    
     const nameInput = document.getElementById('player-name');
     if (nameInput) nameInput.value = "";
     
-    // Si on est en jeu, retour au hub
+    // 2. Gestion de la redirection / rechargement
     if (window.location.pathname.includes("/game")) {
+        // Si on est en jeu, on renvoie au Hub (ce qui recharge la page)
         window.location.href = "/";
     } else {
+        // Si on est déjà sur le Hub
         if(window.closeModal) window.closeModal();
+        
+        // AJOUT : Rechargement explicite de la page
+        setTimeout(() => location.reload(), 100); 
     }
 }
 
@@ -78,7 +88,6 @@ export function saveSessionPseudo() {
         const hubInput = document.getElementById('player-name');
         if (hubInput) hubInput.value = state.currentUser;
         
-        // AJOUT ICI : On vérifie si ce nouveau pseudo a déjà gagné aujourd'hui
         checkDailyVictory(); 
         
         closeModal();

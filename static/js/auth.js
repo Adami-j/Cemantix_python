@@ -1,7 +1,6 @@
 import { setCurrentUser, logout as sessionLogout } from "./session.js";
 import { state } from "./state.js";
 import { showModal } from "./ui.js";
-// AJOUT : Import de la fonction qui gère le profil et les stats
 import { openLoginModal } from "./modal.js"; 
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -82,26 +81,21 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function injectAdminButton() {
-    // Si déjà injecté, on arrête
+    if (localStorage.getItem("is_admin") !== "true") return;
     if (document.getElementById('admin-btn-panel')) return;
 
-    // Cible : la zone utilisateur en haut à droite (présente sur Hub ET Jeu)
     const target = document.querySelector('.user-controls'); 
     
     if (target) {
         const btn = document.createElement('button');
         btn.id = 'admin-btn-panel';
-        // On reprend le style du bouton profil pour être cohérent
-        btn.className = 'profile-btn'; 
-        btn.style.marginRight = '10px'; // Un peu d'espace avec le bouton profil
-        btn.style.borderColor = 'var(--accent)';
-        btn.style.color = 'var(--accent)';
-        btn.innerHTML = '<span style="font-size:1.2rem">🛠️</span>';
+        btn.className = 'btn btn-outline'; 
+        btn.style.marginRight = '10px';
+        btn.innerHTML = '🛠️';
         btn.title = "Panel Admin";
         
-        btn.onclick = () => window.location.href = '/admin_panel.html';
-        
-        // On l'ajoute au début de la div (à gauche du bouton profil)
+        btn.onclick = () => window.location.href = '/static/admin_panel.html';
+    
         target.insertBefore(btn, target.firstChild);
     }
 }

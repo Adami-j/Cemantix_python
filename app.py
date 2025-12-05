@@ -436,7 +436,7 @@ async def login(user_data: UserAuth, db = Depends(get_db)):
         raise HTTPException(status_code=401, detail="Pseudo ou mot de passe incorrect.")
     
     access_token = create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer", "username": user.username}
+    return {"access_token": access_token, "token_type": "bearer", "username": user.username, "is_admin": user.is_admin}
 
 @app.post("/rooms/join_random")
 def join_random_duel(payload: CreateRoomRequest):

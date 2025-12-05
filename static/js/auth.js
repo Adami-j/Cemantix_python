@@ -20,18 +20,17 @@ document.addEventListener('DOMContentLoaded', () => {
         updateProfileUI(username);
     }
 
-    // --- MODIFICATION ICI : Délégation à openLoginModal ---
+    if (localStorage.getItem("is_admin") === "true") {
+        injectAdminButton();
+    }
+
     if (btnProfile) {
         btnProfile.addEventListener('click', (e) => {
             e.preventDefault();
-            // On appelle la fonction centrale qui gère maintenant :
-            // 1. L'affichage des stats (si connecté)
-            // 2. L'authentification (si déconnecté)
             openLoginModal();
         });
     }
 
-    // --- 4. Logique de la modale de déconnexion (Toujours utile si appelée via le bouton "Se déconnecter" des stats) ---
     if (confirmLogoutBtn) {
         confirmLogoutBtn.addEventListener('click', () => {
             logout(); // Action de déconnexion
@@ -66,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const username = usernameInput.value.trim();
             const password = passwordInput.value;
 
-            // --- DEBUT VALIDATION STRICTE ---
             const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
             
             if (!usernameRegex.test(username)) {
@@ -174,9 +172,10 @@ async function performAuth(endpoint, data, errorId) {
         
         setCurrentUser(result.username); 
 
-        if (response.user.is_admin) {
+        if (result.is_admin === true) {
+            console.log("Admin détecté !");
             localStorage.setItem("is_admin", "true");
-            injectAdminButton();
+            if (typeof injectAdminButton === "function") injectAdminButton();
         } else {
             localStorage.removeItem("is_admin");
         }

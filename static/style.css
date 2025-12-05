@@ -1263,6 +1263,25 @@ input:disabled {
 .auth-box {
     max-width: 400px; /* Plus étroit que les autres modales */
 }
+
+.admin-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 20px; }
+        
+.admin-table th, .admin-table td { 
+    padding: 12px; 
+    text-align: left; 
+    border-bottom: 1px solid #ddd; }
+        
+.admin-header { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    margin-bottom: 30px; }
+    
+
+
 /* =========================================
    ADAPTATION MOBILE COMPLÈTE (Max 768px)
    ========================================= */

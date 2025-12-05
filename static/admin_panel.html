@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Administration Arcade</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        .admin-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .admin-table th, .admin-table td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        .admin-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="admin-header">
+        <h1>🛠️ Administration</h1>
+        <a href="/" class="btn btn-outline">Retour au Hub</a>
+    </div>
+
+    <div class="panel">
+        <h3>Gestion des Joueurs</h3>
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Pseudo</th>
+                    <th>Parties</th>
+                    <th>Admin ?</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-list">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Script simple pour charger les utilisateurs
+    async function loadUsers() {
+        const token = localStorage.getItem('access_token');
+        if (!token) window.location.href = '/';
+
+        try {
+            const res = await fetch('/admin/users', {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            
+            if (!res.ok) throw new Error("Accès refusé");
+            
+            const users = await res.json();
+            const tbody = document.getElementById('users-list');
+            tbody.innerHTML = '';
+
+            users.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${u.id}</td>
+                    <td><strong>${u.username}</strong></td>
+                    <td>${u.games_played}</td>
+                    <td>${u.is_admin ? '✅' : '❌'}</td>
+                    <td>
+                        ${!u.is_admin ? `<button class="btn btn-danger" style="padding: 5px 10px; font-size: 0.8rem;" onclick="deleteUser(${u.id})">Supprimer</button>` : ''}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        } catch (e) {
+            alert("Erreur ou accès interdit : " + e.message);
+        }
+    }
+
+    async function deleteUser(id) {
+        if(!confirm("Supprimer ce joueur définitivement ?")) return;
+        const token = localStorage.getItem('access_token');
+        await fetch(`/admin/users/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        loadUsers();
+    }
+
+    loadUsers();
+</script>
+</body>
+</html>

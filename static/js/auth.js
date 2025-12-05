@@ -156,6 +156,9 @@ async function performAuth(endpoint, data, errorId) {
 
         const result = await response.json();
 
+        console.log("🔍 Réponse complète du serveur :", result);
+        console.log("🧐 Valeur de is_admin :", result.is_admin, "Type :", typeof result.is_admin);
+
         if (!response.ok) {
             throw new Error(result.detail || "Erreur inconnue");
         }
@@ -163,7 +166,6 @@ async function performAuth(endpoint, data, errorId) {
         localStorage.setItem('access_token', result.access_token);
         setCurrentUser(result.username); 
 
-        // --- CORRECTION DE LA DÉTECTION ---
         if (result.is_admin === true) {
             console.log("Admin détecté !");
             localStorage.setItem("is_admin", "true");
@@ -178,8 +180,7 @@ async function performAuth(endpoint, data, errorId) {
         const msg = endpoint.includes('register') ? "Compte créé !" : "Connexion réussie !";
         showSuccessModal(msg);
 
-        // --- RECHARGEMENT UNIQUEMENT EN CAS DE SUCCÈS ---
-        setTimeout(() => location.reload(), 500);
+        setTimeout(() => location.reload(), 0);
 
     } catch (err) {
         console.error(err);

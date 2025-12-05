@@ -4,7 +4,12 @@ import { showModal } from "./ui.js";
 import { openLoginModal } from "./modal.js"; 
 
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("🔧 Auth.js chargé - Version Debug");
+    const isAdmin = localStorage.getItem("is_admin");
+    console.log("Statut Admin au démarrage :", isAdmin);
+    
+    if (isAdmin === "true") {
+        injectAdminButton();
+    }
 
     // --- 1. Récupération des éléments DOM ---
     const authModal = document.getElementById('auth-modal');
@@ -19,14 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     if (token && username) {
         updateProfileUI(username);
-    }
-
-    // Vérification au chargement
-    const savedAdmin = localStorage.getItem("is_admin");
-    console.log("Statut Admin au chargement (localStorage) :", savedAdmin);
-    
-    if (savedAdmin === "true") {
-        injectAdminButton();
     }
 
     if (btnProfile) {
@@ -87,14 +84,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function injectAdminButton() {
-    console.log("Tentative d'injection du bouton Admin...");
-    if (document.getElementById('admin-btn-panel')) {
-        console.log("Bouton déjà présent.");
-        return;
-    }
+    if (document.getElementById('admin-btn-panel')) return;
 
     const target = document.querySelector('.user-controls'); 
-    console.log("Cible .user-controls trouvée ?", !!target);
     
     if (target) {
         const btn = document.createElement('button');
@@ -103,11 +95,12 @@ function injectAdminButton() {
         btn.style.marginRight = '10px';
         btn.innerHTML = '🛠️';
         btn.title = "Panel Admin";
-        
         btn.onclick = () => window.location.href = '/static/admin_panel.html';
     
         target.insertBefore(btn, target.firstChild);
-        console.log("Bouton Admin injecté avec succès !");
+        console.log("Bouton Admin inséré.");
+    } else {
+        console.warn("Impossible de trouver .user-controls pour insérer le bouton admin.");
     }
 }
 
@@ -208,12 +201,7 @@ async function performAuth(endpoint, data, errorId) {
         const msg = endpoint.includes('register') ? "Compte créé !" : "Connexion réussie !";
         showSuccessModal(msg);
 
-        // --- RECHARGEMENT FORCÉ ---
-        console.log("🔄 Rechargement de la page dans 1 seconde...");
-        setTimeout(() => {
-            console.log("Rechargement maintenant !");
-            window.location.reload();
-        }, 1000);
+        window.location.reload();
 
     } catch (err) {
         console.error("ERREUR AUTH :", err);

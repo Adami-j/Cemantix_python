@@ -83,6 +83,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 });
 
+function injectAdminButton() {
+    if (!localStorage.getItem("is_admin")) return;
+
+    const nav = document.querySelector('nav'); // Ou user-controls
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-outline'; // Style existant
+    btn.innerText = '🛠️ Admin Panel';
+    btn.style.marginLeft = '10px';
+    btn.onclick = () => window.location.href = '/admin_panel.html';
+    
+    if(nav) nav.appendChild(btn);
+}
+
 // Basculer entre les onglets
 window.switchAuthTab = function(tab) {
     const loginForm = document.getElementById('login-form');
@@ -160,6 +173,13 @@ async function performAuth(endpoint, data, errorId) {
         localStorage.setItem('access_token', result.access_token);
         
         setCurrentUser(result.username); 
+
+        if (response.user.is_admin) {
+            localStorage.setItem("is_admin", "true");
+            injectAdminButton();
+        } else {
+            localStorage.removeItem("is_admin");
+        }
         
         // Fermer la modale d'auth
         const authModal = document.getElementById('auth-modal');

@@ -21,3 +21,5 @@ class User(Base):
     
     # Daily Challenge
     daily_challenges_validated = Column(Integer, default=0)
+
+    is_admin = Column(Boolean, default=False)

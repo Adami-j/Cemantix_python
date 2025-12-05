@@ -7,7 +7,6 @@ export function addEntry(entry) {
     renderHistory(entry.word);
 }
 
-// Ajout du paramètre highlightWord avec valeur par défaut null
 export function renderHistory(highlightWord = null) {
     elements.history.innerHTML = "";
 

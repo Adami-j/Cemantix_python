@@ -2,6 +2,8 @@ import asyncio
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, Depends, HTTPException, status
 from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from pydantic import BaseModel
 from starlette.responses import FileResponse
 from starlette.staticfiles import StaticFiles
@@ -15,7 +17,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 from core.models import User
 from core.database import engine, Base, get_db
-from core.auth import get_password_hash, verify_password, create_access_token
+from core.auth import get_password_hash, verify_password, create_access_token, SECRET_KEY, ALGORITHM
 from sqlalchemy import select
 from pydantic import BaseModel, field_validator
 from sqlalchemy import update
@@ -120,26 +122,6 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-class UserAuth(BaseModel):
-    username: str
-    password: str
-
-    @field_validator('username')
-    @classmethod
-    def validate_username(cls, v: str) -> str:
-        v = v.strip()
-        
-        # Règle 1 : Longueur
-        if not (3 <= len(v) <= 20):
-            raise ValueError('Le pseudo doit contenir entre 3 et 20 caractères.')
-        
-        # Règle 2 : Caractères autorisés (Alphanumérique + tiret + underscore)
-        # Regex : ^ (début) [a-zA-Z0-9_-]+ (caractères autorisés) $ (fin)
-        if not re.match(r"^[a-zA-Z0-9_-]+$", v):
-            raise ValueError('Le pseudo ne peut contenir que des lettres, chiffres, tirets (-) et underscores (_). Pas d\'espaces.')
-            
-        return v
-
 class RoomConnectionManager:
     def __init__(self):
         self.active_connections: Dict[str, List[WebSocket]] = {}
@@ -166,6 +148,38 @@ class RoomConnectionManager:
 
 connections = RoomConnectionManager()
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+async def get_current_user(token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Impossible de valider les identifiants",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        # Correction de l'erreur de type : on laisse Python inférer le type ou on cast si besoin
+        username = payload.get("sub")
+        if username is None:
+            raise credentials_exception
+    except JWTError:
+        raise credentials_exception
+    
+    # On utilise select(User) pour l'async
+    result = await db.execute(select(User).where(User.username == str(username)))
+    user = result.scalars().first()
+    if user is None:
+        raise credentials_exception
+    return user
+
+async def get_current_admin_user(current_user: User = Depends(get_current_user)):
+    # Correction de l'erreur Column[bool] : on vérifie que current_user est bien une instance
+    if not current_user.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Droits d'administrateur requis"
+        )
+    return current_user
 
 def build_scoreboard(room: RoomState):
     scoreboard = [
@@ -272,6 +286,33 @@ def process_guess(room: RoomState, word: str, player_name: str) -> Dict[str, Any
         "scoreboard": build_scoreboard(room),
         "victory": victory and room.mode != "blitz",
     }
+
+@app.get("/admin/users")
+async def get_all_users(admin: User = Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)):
+    result = await db.execute(select(User))
+    users = result.scalars().all()
+    return users
+
+
+@app.delete("/admin/users/{user_id}")
+async def delete_user(user_id: int, admin: User = Depends(get_current_admin_user), db: AsyncSession = Depends(get_db)):
+    # 1. On cherche l'utilisateur dans la base de données
+    result = await db.execute(select(User).where(User.id == user_id))
+    user_to_delete = result.scalars().first()
+
+    # 2. S'il n'existe pas, on renvoie une erreur 404
+    if not user_to_delete:
+        raise HTTPException(status_code=404, detail="Utilisateur non trouvé")
+
+    # 3. Sécurité : Empêcher de se supprimer soi-même (optionnel mais conseillé)
+    if user_to_delete.id == admin.id:
+        raise HTTPException(status_code=400, detail="Vous ne pouvez pas supprimer votre propre compte admin.")
+
+    # 4. Suppression et validation
+    await db.delete(user_to_delete)
+    await db.commit()
+
+    return {"status": "User deleted", "username": user_to_delete.username}
 
 
 @app.on_event("startup")

@@ -1499,6 +1499,9 @@ input:disabled {
         position: absolute;
         top: 15px;
         right: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
     
     .profile-btn {

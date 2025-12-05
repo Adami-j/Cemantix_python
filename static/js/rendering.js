@@ -4,7 +4,6 @@ import { setRoomInfo } from "./ui.js";
 
 export function addEntry(entry) {
     state.entries.unshift(entry);
-    // ON PASSE LE MOT À SURBRILLER ICI
     renderHistory(entry.word);
 }
 
@@ -31,8 +30,6 @@ export function renderHistory(highlightWord = null) {
         
         row.className = `line ${isWin ? 'win' : ''}`;
 
-        // --- MODIFICATION ICI : Ajout de la classe d'animation ---
-        // Si c'est le mot qu'on vient d'ajouter, on met la classe .new-entry
         if (entry.word === highlightWord) {
             row.classList.add("new-entry");
         }
@@ -62,8 +59,6 @@ export function renderHistory(highlightWord = null) {
     }
 }
 
-// ... (Le reste du fichier : renderScoreboard, triggerConfetti, getIcon... reste inchangé) ...
-// (Gardez bien vos fonctions getIcon/getColor existantes à la fin)
 export function renderScoreboard(data) {
     if (!elements.scoreboard) return;
     elements.scoreboard.innerHTML = "";

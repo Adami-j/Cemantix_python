@@ -563,7 +563,7 @@ def game_page():
 @app.post("/rooms")
 def create_room(payload: CreateRoomRequest):
 
-    needs_model = payload.game_type in ["cemantix", "dictionnario", "intruder", "hangman"]
+    needs_model = payload.game_type in ["cemantix", "dictionnario", "intruder", "hangman", "duel"]
     
     if needs_model and model is None:
         return JSONResponse(status_code=500, content={"message": "Le modèle sémantique n'est pas chargé."})

@@ -199,6 +199,8 @@ async function performAuth(endpoint, data, errorId) {
         const msg = endpoint.includes('register') ? "Compte créé avec succès !" : "Connexion réussie !";
         showSuccessModal(msg);
 
+        setTimeout(() => location.reload(), 0);
+
     } catch (err) {
         console.error(err);
         if(errorElem) {
@@ -213,7 +215,6 @@ async function performAuth(endpoint, data, errorId) {
             btn.textContent = originalText;
         }
     }
-    setTimeout(() => location.reload(), 0);
 }
 
 function updateProfileUI(username) {

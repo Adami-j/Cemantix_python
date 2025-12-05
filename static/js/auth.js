@@ -177,10 +177,10 @@ async function performAuth(endpoint, data, errorId) {
         const authModal = document.getElementById('auth-modal');
         if(authModal) authModal.classList.remove('active');
         
-        const msg = endpoint.includes('register') ? "Compte créé !" : "Connexion réussie !";
+        const msg = endpoint.includes('register') ? "Compte créé !" : "Connexion réussie !!!";
         showSuccessModal(msg);
-
         setTimeout(() => location.reload(), 0);
+
 
     } catch (err) {
         console.error(err);
@@ -190,7 +190,6 @@ async function performAuth(endpoint, data, errorId) {
         } else {
             alert(err.message);
         }
-        // Pas de reload ici pour laisser l'utilisateur lire l'erreur
     } finally {
         if(btn) {
             btn.disabled = false;

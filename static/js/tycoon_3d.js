@@ -1,28 +1,32 @@
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { state } from "./state.js";
 import { verifierPseudo } from "./session.js";
 
 /* =========================================
-   1. CONFIGURATION DU JEU (LOGIQUE)
+   1. CONFIGURATION & ASSETS (Kenney Furniture Kit)
    ========================================= */
-const CONFIG = {
-    upgrades: {
-        stagiaire: { id: 'stagiaire', name: "Poste Stagiaire", baseCost: 15, production: 1, color: 0x00ff00 },
-        correcteur: { id: 'correcteur', name: "Bureau Correcteur", baseCost: 100, production: 5, color: 0x00ffff },
-        imprimerie: { id: 'imprimerie', name: "Imprimante 3D", baseCost: 1100, production: 40, color: 0xffaa00 },
-        serveur: { id: 'serveur', name: "Serveur Rack", baseCost: 12000, production: 250, color: 0xff0000 },
-        ia: { id: 'ia', name: "Supercalculateur", baseCost: 130000, production: 1500, color: 0xff00ff }
-    }
+const ASSETS = {
+    // Le setup du joueur (Clicker)
+    myDesk: '/static/models/desk.glb',
+    myComputer: '/static/models/computer.glb',
+    
+    // Les upgrades (Mobilier)
+    stagiaire: '/static/models/desk.glb',       // Ajoute un bureau
+    correcteur: '/static/models/chair.glb',     // Ajoute une chaise
+    imprimerie: '/static/models/bookcaseClosed.glb',   // Ajoute une armoire
+    serveur: '/static/models/trashcan.glb',    // Ajoute une bibliothèque (Savoir)
+    ia: '/static/models/lampRoundFloor.glb'               // Ajoute une lampe (Lumière/Idée)
 };
 
-const ASSETS = {
-    stagiaire: '/static/models/desk.glb',      // Un bureau
-    correcteur: '/static/models/computerScreen.glb', // Un ordi
-    imprimerie: '/static/models/table.glb',  // Une imprimante
-    serveur: '/static/models/speaker.glb', // Un rack serveur
-    ia: '/static/models/shower.glb'  // Une grosse machine
+const CONFIG = {
+    upgrades: {
+        stagiaire: { id: 'stagiaire', name: "Nouveau Bureau", baseCost: 15, production: 1 },
+        correcteur: { id: 'correcteur', name: "Chaise Ergo", baseCost: 100, production: 5 },
+        imprimerie: { id: 'imprimerie', name: "Archives", baseCost: 1100, production: 40 },
+        serveur: { id: 'serveur', name: "Bibliothèque", baseCost: 12000, production: 250 },
+        ia: { id: 'ia', name: "Éclairage IA", baseCost: 130000, production: 1500 }
+    }
 };
 
 let gameState = {
@@ -32,227 +36,165 @@ let gameState = {
 };
 
 /* =========================================
-   2. MOTEUR 3D (THREE.JS)
+   2. SCÈNE & CAMÉRA ISO
    ========================================= */
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x111111); // Gris très foncé
-scene.fog = new THREE.FogExp2(0x111111, 0.02); // Brouillard pour la profondeur
+scene.background = new THREE.Color(0xdddddd); // Fond clair (style Kenney)
 
-const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 5, 10);
+// Caméra Isométrique
+const aspect = window.innerWidth / window.innerHeight;
+const d = 10;
+const camera = new THREE.OrthographicCamera(-d * aspect, d * aspect, d, -d, 1, 1000);
+camera.position.set(20, 20, 20); 
+camera.lookAt(scene.position);
 
-const renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('game-canvas'), antialias: true });
+const renderer = new THREE.WebGLRenderer({ 
+    canvas: document.getElementById('game-canvas'), 
+    antialias: true 
+});
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-// Contrôles caméra (Orbit)
-const controls = new OrbitControls(camera, renderer.domElement);
-controls.enableDamping = true;
-controls.maxPolarAngle = Math.PI / 2 - 0.1; // Empêche de passer sous le sol
-controls.minDistance = 3;
-controls.maxDistance = 20;
-
-// Éclairage
-const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1.5); // Ciel blanc, sol gris
-hemiLight.position.set(0, 20, 0);
-scene.add(hemiLight);
-
-const dirLight = new THREE.DirectionalLight(0xffffff, 3);
+/* =========================================
+   3. ÉCLAIRAGE (Style Bureau Lumineux)
+   ========================================= */
+const dirLight = new THREE.DirectionalLight(0xffffff, 1.2);
 dirLight.position.set(10, 20, 10);
 dirLight.castShadow = true;
 dirLight.shadow.mapSize.width = 2048;
 dirLight.shadow.mapSize.height = 2048;
 scene.add(dirLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 2, 50);
-pointLight.position.set(0, 10, 0);
-pointLight.castShadow = true;
-scene.add(pointLight);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // Lumière ambiante forte
+scene.add(ambientLight);
 
-// Sol (Grille style TRON)
-const gridHelper = new THREE.GridHelper(100, 100, 0x00ff00, 0x444444);
-scene.add(gridHelper);
-
-const planeGeometry = new THREE.PlaneGeometry(100, 100);
-const planeMaterial = new THREE.MeshStandardMaterial({ color: 0x080808, roughness: 0.8 });
-const plane = new THREE.Mesh(planeGeometry, planeMaterial);
-plane.rotation.x = -Math.PI / 2;
-plane.receiveShadow = true;
-scene.add(plane);
-
+/* =========================================
+   4. CHARGEMENT & MONDE
+   ========================================= */
 const loader = new GLTFLoader();
-const loadedModels = {}; // Cache pour stocker les modèles chargés
+const loadedModels = {};
+let clickTargetMesh = null; // L'objet à cliquer (l'ordi)
 
-// Fonction de préchargement (se lance au début)
-async function loadAllModels() {
-    const promises = [];
-    
-    for (const [key, url] of Object.entries(ASSETS)) {
-        promises.push(new Promise((resolve) => {
+async function loadWorld() {
+    // 1. Sol (Tapis géant)
+    const floorGeo = new THREE.PlaneGeometry(50, 50);
+    const floorMat = new THREE.MeshStandardMaterial({ color: 0x8ecca6 }); // Vert pastel Kenney
+    const floor = new THREE.Mesh(floorGeo, floorMat);
+    floor.rotation.x = -Math.PI / 2;
+    floor.receiveShadow = true;
+    scene.add(floor);
+
+    // 2. Précharger tous les modèles
+    const promises = Object.entries(ASSETS).map(([key, url]) => {
+        return new Promise((resolve) => {
             loader.load(url, (gltf) => {
                 const model = gltf.scene;
-                
-                // Optimisation : Activer les ombres sur tout le modèle
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        child.castShadow = true;
-                        child.receiveShadow = true;
-                    }
-                });
-                
-                // Ajustement d'échelle (souvent les modèles sont trop gros/petits)
-                // Tu devras peut-être ajuster ce chiffre selon tes modèles
-                model.scale.set(0.5, 0.5, 0.5); 
-                
+                // Activer les ombres sur tout
+                model.traverse(c => { if(c.isMesh) { c.castShadow = true; c.receiveShadow = true; } });
                 loadedModels[key] = model;
                 resolve();
-            }, undefined, (error) => {
-                console.error(`Erreur chargement ${key}:`, error);
-                resolve(); // On resolve quand même pour pas bloquer
-            });
-        }));
-    }
+            }, undefined, (e) => { console.warn(`Manque: ${url}`, e); resolve(); });
+        });
+    });
+
     await Promise.all(promises);
-    console.log("Tous les modèles sont chargés !");
-    sync3DWorld(); // On affiche tout ce qu'on a déjà acheté
-}
+    console.log("Modèles chargés.");
 
-// --- GROUPE DES OBJETS DU JEU ---
-const worldGroup = new THREE.Group();
-scene.add(worldGroup);
-
-// LE "CŒUR" (Clicker principal)
-const coreGeometry = new THREE.IcosahedronGeometry(1.5, 0);
-const coreMaterial = new THREE.MeshStandardMaterial({ 
-    color: 0x6c5ce7, 
-    emissive: 0x6c5ce7, 
-    emissiveIntensity: 0.5,
-    roughness: 0.2,
-    metalness: 0.8
-});
-const coreMesh = new THREE.Mesh(coreGeometry, coreMaterial);
-coreMesh.position.set(0, 2, 0);
-coreMesh.castShadow = true;
-coreMesh.userData = { isClickable: true, type: 'core' }; // Tag pour le raycaster
-scene.add(coreMesh);
-
-// Anneaux autour du cœur (animation)
-const ringGeo = new THREE.TorusGeometry(2.5, 0.05, 16, 100);
-const ringMat = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
-const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-ringMesh.rotation.x = Math.PI / 2;
-scene.add(ringMesh);
-
-// --- RAYCASTER (Interaction Souris) ---
-const raycaster = new THREE.Raycaster();
-const mouse = new THREE.Vector2();
-
-window.addEventListener('click', onMouseClick);
-window.addEventListener('mousemove', onMouseMove);
-
-function onMouseMove(event) {
-    // Convertir souris en coordonnées normalisées (-1 à +1)
-    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-}
-
-function onMouseClick(event) {
-    // Si on clique sur l'UI, on ignore la 3D
-    if (event.target.closest('.hud-bottom') || event.target.closest('.hud-top')) return;
-
-    raycaster.setFromCamera(mouse, camera);
-    const intersects = raycaster.intersectObjects(scene.children, true);
-
-    if (intersects.length > 0) {
-        const object = intersects[0].object;
-        if (object.userData.isClickable && object.userData.type === 'core') {
-            // CLIC SUR LE CŒUR
-            clickCoreEffect();
-        }
+    // 3. Installer le bureau du joueur (Centre)
+    if (loadedModels.myDesk) {
+        const desk = loadedModels.myDesk.clone();
+        desk.position.set(0, 0, 0);
+        scene.add(desk);
+    } else {
+        // Fallback cube si pas de modèle
+        const cube = new THREE.Mesh(new THREE.BoxGeometry(2,1,1), new THREE.MeshStandardMaterial({color:0x555555}));
+        cube.position.y = 0.5;
+        scene.add(cube);
     }
-}
 
-function clickCoreEffect() {
-    gameState.currency += 1; // Gain au clic
-    updateUI();
+    if (loadedModels.myComputer) {
+        const pc = loadedModels.myComputer.clone();
+        pc.position.set(0, 1, 0); // Posé sur le bureau (ajuster Y selon modèle)
+        pc.userData = { isClickable: true }; // C'est lui qu'on clique !
+        clickTargetMesh = pc;
+        scene.add(pc);
+    }
     
-    // Animation visuelle (Scale Up rapide)
-    coreMesh.scale.set(1.2, 1.2, 1.2);
-    coreMaterial.emissiveIntensity = 2;
-    setTimeout(() => {
-        coreMesh.scale.set(1, 1, 1);
-        coreMaterial.emissiveIntensity = 0.5;
-    }, 100);
+    // Spawn des objets déjà possédés
+    sync3DWorld();
 }
 
-const spawnedObjects = {
-    stagiaire: [], correcteur: [], imprimerie: [], serveur: [], ia: []
-};
+/* =========================================
+   5. SPAWN D'OBJETS (Logique de Grille)
+   ========================================= */
+const spawnedObjects = { stagiaire: [], correcteur: [], imprimerie: [], serveur: [], ia: [] };
 
-// Fonction pour ajouter visuellement un objet
 function spawnBuilding(type) {
-    // Si le modèle n'est pas encore chargé (ex: connexion lente), on attend ou on met un cube placeholder
-    if (!loadedModels[type]) {
-        console.warn(`Modèle ${type} pas encore prêt.`);
-        return; 
-    }
+    if (!loadedModels[type]) return;
 
-    const index = spawnedObjects[type].length;
-    
-    // CLONAGE DU MODÈLE (Très performant)
     const mesh = loadedModels[type].clone();
-    
-    // POSITIONNEMENT (Logique en cercles concentriques)
-    let radius, angle, yPos;
+    const index = spawnedObjects[type].length;
+
+    // --- LOGIQUE DE PLACEMENT EN GRILLE / ZONES ---
+    // On définit des zones pour chaque type d'objet pour que ça ressemble à un bureau organisé
+    let x = 0, z = 0;
+    const spacing = 2.5; // Espace entre les objets
 
     if (type === 'stagiaire') {
-        radius = 5; 
-        yPos = 0; // Au sol
-        angle = index * 0.8;
-    } else if (type === 'correcteur') {
-        radius = 8;
-        yPos = 0;
-        angle = index * 0.7 + 1;
-    } else if (type === 'serveur') {
-        radius = 12;
-        yPos = 0;
-        angle = index * 0.5 + 2;
-    } else {
-        radius = 15 + (Math.random() * 2);
-        yPos = 0;
-        angle = index * 0.5;
+        // Zone Bureaux : Devant le joueur (Z positif)
+        const rowSize = 4;
+        const row = Math.floor(index / rowSize);
+        const col = index % rowSize;
+        x = (col - 1.5) * spacing; 
+        z = 4 + (row * spacing); // Commence à Z=4
+    } 
+    else if (type === 'correcteur') {
+        // Les chaises vont... avec les bureaux des stagiaires !
+        // On essaie de les placer derrière les bureaux existants
+        const rowSize = 4;
+        const row = Math.floor(index / rowSize);
+        const col = index % rowSize;
+        x = (col - 1.5) * spacing;
+        z = 4 + (row * spacing) + 1; // +1 en Z pour être derrière le bureau
+        mesh.rotation.y = Math.PI; // Face au bureau
+    }
+    else if (type === 'imprimerie') {
+        // Zone Archives : À gauche (X négatif)
+        x = -8 - (Math.floor(index/5) * 2);
+        z = (index % 5) * 2 - 4;
+        mesh.rotation.y = Math.PI / 2;
+    }
+    else if (type === 'serveur') {
+        // Zone Serveurs : À droite (X positif)
+        x = 8 + (Math.floor(index/5) * 2);
+        z = (index % 5) * 2 - 4;
+        mesh.rotation.y = -Math.PI / 2;
+    }
+    else if (type === 'ia') {
+        // Lampes : Dispersées aléatoirement pour l'ambiance
+        const angle = index * 137.5; // Angle d'or pour dispersion naturelle
+        const radius = 6 + (index * 0.5);
+        x = Math.cos(angle) * radius;
+        z = Math.sin(angle) * radius;
     }
 
-    mesh.position.set(
-        Math.cos(angle) * radius, 
-        yPos, 
-        Math.sin(angle) * radius
-    );
-
-    // Orientation : Regarder vers le centre (le Cœur)
-    mesh.lookAt(0, yPos, 0);
-
-    // Animation d'apparition (Scale up)
-    mesh.scale.set(0,0,0);
+    mesh.position.set(x, 0, z);
     
+    // Animation Pop
+    mesh.scale.set(0,0,0);
     scene.add(mesh);
     spawnedObjects[type].push(mesh);
 
-    // Animation simple
     let s = 0;
-    const targetScale = 0.5; // Doit correspondre à l'échelle de base définie dans le loader
     const anim = setInterval(() => {
-        s += 0.05;
-        mesh.scale.set(s, s, s);
-        if(s >= targetScale) {
-            mesh.scale.set(targetScale, targetScale, targetScale);
-            clearInterval(anim);
-        }
+        s += 0.1;
+        mesh.scale.set(s,s,s);
+        if(s >= 1) clearInterval(anim);
     }, 16);
 }
 
 function sync3DWorld() {
-    // Vérifie si le nombre d'objets 3D correspond à l'inventaire
     for (const [key, count] of Object.entries(gameState.inventory)) {
         if (!spawnedObjects[key]) continue;
         const diff = count - spawnedObjects[key].length;
@@ -263,26 +205,70 @@ function sync3DWorld() {
 }
 
 /* =========================================
-   3. BOUCLE DE JEU & LOGIQUE TYCOON
+   6. INTERACTION (CLIC)
    ========================================= */
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
 
-// Init HTML UI
+window.addEventListener('mousedown', onMouseDown);
+
+function onMouseDown(event) {
+    if (event.target.closest('.hud-bottom') || event.target.closest('.hud-top')) return;
+
+    mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+
+    // On peut cliquer sur l'ordi ou le bureau
+    const intersects = raycaster.intersectObjects(scene.children, true);
+    let clicked = false;
+
+    // Si on clique sur l'ordi (cible prioritaire)
+    for (let i = 0; i < intersects.length; i++) {
+        // On remonte jusqu'à l'objet racine du modèle si besoin
+        let obj = intersects[i].object;
+        while(obj.parent && obj.parent !== scene) obj = obj.parent;
+        
+        // Si c'est l'ordi ou le bureau
+        if (obj === clickTargetMesh || (loadedModels.myDesk && obj === loadedModels.myDesk) || intersects[i].object.userData.isClickable) {
+            triggerClickEffect();
+            clicked = true;
+            break;
+        }
+    }
+    
+    // Fallback : Si on clique dans le vide mais qu'on veut être sympa pour l'UX
+    if (!clicked) triggerClickEffect();
+}
+
+function triggerClickEffect() {
+    gameState.currency += 1;
+    updateUI();
+
+    // Animation de saut de l'ordi
+    if (clickTargetMesh) {
+        clickTargetMesh.position.y += 0.2;
+        setTimeout(() => clickTargetMesh.position.y -= 0.2, 50);
+    }
+}
+
+/* =========================================
+   7. LOGIQUE MOTEUR (Idem précédent)
+   ========================================= */
 function initHUD() {
     const container = document.getElementById("upgrades-container");
     container.innerHTML = "";
-
     for (const key in CONFIG.upgrades) {
         const item = CONFIG.upgrades[key];
         const div = document.createElement("div");
         div.className = "upgrade-card-3d";
         div.id = `card-${key}`;
         div.onclick = () => buyUpgrade(key);
-        
         div.innerHTML = `
-            <div style="font-weight:bold; font-size:0.9rem;">${item.name}</div>
-            <div style="font-size:0.8rem; color:#aaa;">+${item.production}/s</div>
-            <div style="color:var(--accent); font-weight:bold; margin-top:5px;" id="cost-${key}">...</div>
-            <div style="font-size:0.7rem;">Possédé: <span id="count-${key}">0</span></div>
+            <div>${item.name}</div>
+            <div style="font-size:0.7em; color:#aaa;">+${item.production}/s</div>
+            <div style="color:var(--accent); font-weight:bold;" id="cost-${key}">...</div>
+            <div style="font-size:0.7em;">Qté: <span id="count-${key}">0</span></div>
         `;
         container.appendChild(div);
     }
@@ -307,8 +293,7 @@ function buyUpgrade(id) {
     if (gameState.currency >= cost) {
         gameState.currency -= cost;
         gameState.inventory[id]++;
-        
-        spawnBuilding(id); // Ajout visuel immédiat
+        spawnBuilding(id);
         updateUI();
         saveGame();
     }
@@ -317,22 +302,16 @@ function buyUpgrade(id) {
 function updateUI() {
     document.getElementById("currency-display").textContent = Math.floor(gameState.currency).toLocaleString();
     document.getElementById("pps-display").textContent = calculatePPS().toLocaleString();
-
     for (const key in CONFIG.upgrades) {
         const cost = getCost(key);
         const card = document.getElementById(`card-${key}`);
-        
         document.getElementById(`cost-${key}`).textContent = cost.toLocaleString();
         document.getElementById(`count-${key}`).textContent = gameState.inventory[key];
-
         if (gameState.currency < cost) card.classList.add("disabled");
         else card.classList.remove("disabled");
     }
 }
 
-/* =========================================
-   4. SYSTEME DE SAUVEGARDE (Même API)
-   ========================================= */
 async function saveGame() {
     if (!state.currentUser) return;
     try {
@@ -362,8 +341,6 @@ async function loadGame() {
             if (data && data.inventory) {
                 gameState.currency = data.currency || 0;
                 gameState.inventory = { ...gameState.inventory, ...data.inventory };
-                
-                // Calcul Offline
                 if (data.last_timestamp) {
                     const sec = (Date.now() - data.last_timestamp) / 1000;
                     const gain = calculatePPS() * sec;
@@ -374,56 +351,34 @@ async function loadGame() {
     } catch (e) { console.error(e); }
 }
 
-/* =========================================
-   5. MAIN LOOP
-   ========================================= */
-
-let lastTime = 0;
-
-function animate(time) {
+function animate() {
     requestAnimationFrame(animate);
-    
-    const delta = (time - lastTime) / 1000;
-    lastTime = time;
-
-    // Rotation douce du cœur
-    coreMesh.rotation.y += 0.01;
-    coreMesh.rotation.z += 0.005;
-    ringMesh.rotation.z -= 0.02;
-    
-    // Pulsation de lumière
-    const pulse = Math.sin(time * 0.002) * 0.5 + 1;
-    pointLight.intensity = 2 * pulse;
-
-    controls.update();
     renderer.render(scene, camera);
-
-    // Tycoon Logic (Ajout des revenus auto)
+    
+    // Idle logic
     const pps = calculatePPS();
-    if (pps > 0 && delta < 1) { // Evite les sauts énormes si on change d'onglet
-        gameState.currency += pps * delta;
+    if (pps > 0) {
+        gameState.currency += pps / 60;
         updateUI();
     }
 }
 
-// Redimensionnement fenêtre
 window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
+    const aspect = window.innerWidth / window.innerHeight;
+    camera.left = -d * aspect;
+    camera.right = d * aspect;
+    camera.top = d;
+    camera.bottom = -d;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// START
 document.addEventListener("DOMContentLoaded", async () => {
     if (!verifierPseudo()) return;
-    
     initHUD();
-    await loadGame(); // Charge les données (combien j'ai de stagiaires)
-    
-    loadAllModels(); 
-    
-    // Sauvegarde auto
+    await loadWorld();
+    await loadGame();
+    sync3DWorld(); 
     setInterval(saveGame, 30000);
-    
-    animate(0);
+    animate();
 });
